@@ -1,0 +1,42 @@
+name: Continuous Build
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+  create:
+    branches: 
+      - release/**
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    
+    env:
+      VERSION: 0.1.0
+
+    steps:
+    - uses: actions/checkout@v3
+    
+    - name: Setup .NET
+      uses: actions/setup-dotnet@v3
+      with:
+        dotnet-version: 6.0.x
+        
+    - name: Restore dependencies
+      run: dotnet restore
+      
+    - name: Build
+      run: dotnet build --configuration Release --no-restore -p:Version=$VERSION
+      
+    - name: Test
+      run: dotnet test --configuration Release --no-build --verbosity normal
+      
+    - name: Package with NuGet
+      if: startsWith(github.ref, 'refs/heads/release')
+      run: |
+        dotnet pack --configuration Release -p:Version=$VERSION -p:RepositoryUrl="https://github.com/tristanlabelle/Pianomino"
+        dotnet nuget add source --name github --username tristanlabelle --password ${{ secrets.GITHUB_TOKEN }} --store-password-in-clear-text "https://nuget.pkg.github.com/tristanlabelle/index.json"
+        dotnet nuget push "Pianomino/bin/Release/Pianomino.$VERSION.nupkg" --api-key ${{secrets.NUGET_TOKEN}} --source "github"
+
