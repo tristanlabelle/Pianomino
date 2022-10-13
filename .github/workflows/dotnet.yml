@@ -1,25 +1,41 @@
-name: .NET
+name: Continuous Build
 
 on:
   push:
     branches: [ "main" ]
   pull_request:
     branches: [ "main" ]
+  create:
+    branches: 
+      - release/**
 
 jobs:
   build:
-
     runs-on: ubuntu-latest
+    
+    env:
+      VERSION: 0.1.0
 
     steps:
     - uses: actions/checkout@v3
+    
     - name: Setup .NET
       uses: actions/setup-dotnet@v3
       with:
         dotnet-version: 6.0.x
+        
     - name: Restore dependencies
       run: dotnet restore
+      
     - name: Build
-      run: dotnet build --no-restore
+      run: dotnet build --no-restore --configuration Release -p:Version=$VERSION
+      
     - name: Test
       run: dotnet test --no-build --verbosity normal
+      
+    - name: Package with NuGet
+      #if: startsWith(github.ref, 'refs/heads/release')
+      run:
+        dotnet pack --configuration Release -p:Version=$VERSION
+        dotnet nuget push "bin/Release/Pianomino.$VERSION.nupkg" --api-key ${{secrets.NUGET_TOKEN}} --source "github"
+
