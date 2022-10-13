@@ -35,7 +35,7 @@ jobs:
       
     - name: Package with NuGet
       #if: startsWith(github.ref, 'refs/heads/release')
-      run:
+      run: |
         dotnet pack --configuration Release -p:Version=$VERSION
         dotnet nuget push "bin/Release/Pianomino.$VERSION.nupkg" --api-key ${{secrets.NUGET_TOKEN}} --source "github"
 
