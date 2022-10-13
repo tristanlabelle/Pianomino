@@ -28,10 +28,10 @@ jobs:
       run: dotnet restore
       
     - name: Build
-      run: dotnet build --no-restore --configuration Release -p:Version=$VERSION
+      run: dotnet build --configuration Release --no-restore -p:Version=$VERSION
       
     - name: Test
-      run: dotnet test --no-build --verbosity normal
+      run: dotnet test --configuration Release --no-build --verbosity normal
       
     - name: Package with NuGet
       #if: startsWith(github.ref, 'refs/heads/release')
