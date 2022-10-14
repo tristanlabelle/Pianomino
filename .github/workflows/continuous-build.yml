@@ -12,12 +12,21 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
-    
-    env:
-      VERSION: 0.1.0
 
     steps:
-    - uses: actions/checkout@v3
+    - name: Checkout
+      uses: actions/checkout@v3
+      with:
+        fetch-depth: 0
+        
+    - name: Install GitVersion
+      uses: GitTools/actions/gitversion/setup@v0.9.14
+      with:
+        versionSpec: '5.x'
+        
+    - name: Run GitVersion
+      id:   gitversion
+      uses: gittools/actions/gitversion/execute@v0.9.14
     
     - name: Setup .NET
       uses: actions/setup-dotnet@v3
@@ -28,7 +37,7 @@ jobs:
       run: dotnet restore
       
     - name: Build
-      run: dotnet build --configuration Release --no-restore -p:Version=$VERSION
+      run: dotnet build --configuration Release --no-restore -p:Version=${{ steps.gitversion.outputs.semVer }}
       
     - name: Test
       run: dotnet test --configuration Release --no-build --verbosity normal
@@ -36,7 +45,7 @@ jobs:
     - name: Package with NuGet
       if: startsWith(github.ref, 'refs/heads/release')
       run: |
-        dotnet pack --configuration Release -p:Version=$VERSION -p:RepositoryUrl="https://github.com/tristanlabelle/Pianomino"
+        dotnet pack --configuration Release -p:Version=${{ steps.gitversion.outputs.semVer }} -p:RepositoryUrl="https://github.com/tristanlabelle/Pianomino"
         dotnet nuget add source --name github --username tristanlabelle --password ${{ secrets.GITHUB_TOKEN }} --store-password-in-clear-text "https://nuget.pkg.github.com/tristanlabelle/index.json"
         dotnet nuget push "Pianomino/bin/Release/Pianomino.$VERSION.nupkg" --api-key ${{secrets.NUGET_TOKEN}} --source "github"
 
