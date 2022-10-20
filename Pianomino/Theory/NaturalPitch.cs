@@ -4,14 +4,13 @@ using System.Runtime.InteropServices;
 namespace Pianomino.Theory;
 
 /// <summary>
-/// Identifies a natural note pitch, i.e. one of the white keys on a keyboard.
+/// A natural note pitch, i.e. one of the white keys on a keyboard.
 /// </summary>
 [StructLayout(LayoutKind.Sequential, Size = 1)]
 public readonly struct NaturalPitch : IEquatable<NaturalPitch>, IComparable<NaturalPitch>
 {
     public const int PerOctave = NoteLetterEnum.Count;
 
-    public static readonly NaturalPitch GeneralMidiZero = new(-1 * PerOctave);
     public static readonly NaturalPitch C0 = new(0);
     public static readonly NaturalPitch D0 = new(1);
     public static readonly NaturalPitch E0 = new(2);

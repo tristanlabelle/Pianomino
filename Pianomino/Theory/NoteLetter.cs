@@ -2,6 +2,9 @@
 
 namespace Pianomino.Theory;
 
+/// <summary>
+/// One of the seven note letters: C, D, E, F, G, A, B.
+/// </summary>
 public enum NoteLetter : byte
 {
     C, D, E, F, G, A, B

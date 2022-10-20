@@ -3,6 +3,9 @@ using System.Runtime.InteropServices;
 
 namespace Pianomino.Theory;
 
+/// <summary>
+/// The duration unit of an undotted note (quarter, half, whole, etc.)
+/// </summary>
 [StructLayout(LayoutKind.Sequential, Size = 1)]
 public readonly struct NoteUnit : IEquatable<NoteUnit>, IComparable<NoteUnit>
 {

@@ -4,6 +4,9 @@ using System.Runtime.InteropServices;
 
 namespace Pianomino.Theory;
 
+/// <summary>
+/// The value (duration) of a note, with or without augmentation dots.
+/// </summary>
 [StructLayout(LayoutKind.Sequential, Size = 2)]
 public readonly struct NoteValue : IEquatable<NoteValue>, IComparable<NoteValue>
 {

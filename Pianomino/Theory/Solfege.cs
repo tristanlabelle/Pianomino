@@ -2,6 +2,9 @@
 
 namespace Pianomino.Theory;
 
+/// <summary>
+/// Converts to and from solfege syllables.
+/// </summary>
 public static class Solfege
 {
     public static string GetSyllable(DiatonicDegree step, bool twoLetterSol = false) => step switch

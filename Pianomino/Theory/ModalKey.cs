@@ -3,6 +3,9 @@ using System.Diagnostics.CodeAnalysis;
 
 namespace Pianomino.Theory;
 
+/// <summary>
+/// A musical key based on church modes rather than only major/minor tonality.
+/// </summary>
 public readonly struct ModalKey : IEquatable<ModalKey>
 {
     public NoteClass Tonic { get; }

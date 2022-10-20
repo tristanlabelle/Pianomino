@@ -3,8 +3,7 @@
 namespace Pianomino.Theory;
 
 /// <summary>
-/// A mathematical abstraction for diatonic notes and intervals,
-/// defined from a number of diatonic steps and a number of semitones.
+/// A musical interval defined from a number of diatonic steps and a number of semitones.
 /// Comparisons are lexicographical on the (steps, semitones) tuple.
 /// </summary>
 public readonly struct Interval : IEquatable<Interval>, IComparable<Interval>

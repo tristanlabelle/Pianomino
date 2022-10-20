@@ -2,6 +2,9 @@
 
 namespace Pianomino.Theory;
 
+/// <summary>
+/// A chord degree (or extension) of a chord build from a stack of thirds.
+/// </summary>
 public enum TertianChordDegree : byte
 {
     First,

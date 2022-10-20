@@ -2,6 +2,9 @@
 
 namespace Pianomino.Theory;
 
+/// <summary>
+/// A degree of a seven-note scale.
+/// </summary>
 public enum DiatonicDegree : byte
 {
     First,

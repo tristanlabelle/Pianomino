@@ -2,6 +2,9 @@
 
 namespace Pianomino.Theory;
 
+/// <summary>
+/// A major or minor key, or tonality.
+/// </summary>
 public readonly struct DiatonicKey : IEquatable<DiatonicKey>
 {
     public static readonly DiatonicKey AMinor = Minor(NoteLetter.A);

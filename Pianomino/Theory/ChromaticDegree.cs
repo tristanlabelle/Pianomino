@@ -2,6 +2,9 @@
 
 namespace Pianomino.Theory;
 
+/// <summary>
+/// A degree of the 12-note chromatic scale.
+/// </summary>
 public enum ChromaticDegree : byte
 {
     P1, m2, M2, m3, M3, P4, TT, P5, m6, M6, m7, M7

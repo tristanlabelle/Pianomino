@@ -1,14 +1,10 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Globalization;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace Pianomino.Theory;
 
 /// <summary>
-/// Represents the absolute pitch of a note, without distinguishing sharps from flats.
+/// The absolute pitch of a note, without distinguishing sharps from flats.
 /// </summary>
 public readonly struct ChromaticPitch : IEquatable<ChromaticPitch>, IComparable<ChromaticPitch>
 {
