@@ -25,7 +25,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\Pianomino\Pianomino.csproj" />
+    <ProjectReference Include="..\Pianomino.Theory\Pianomino.Theory.csproj" />
   </ItemGroup>
 
 </Project>

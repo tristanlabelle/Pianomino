@@ -3,7 +3,7 @@
   <PropertyGroup>
     <TargetFramework>net6.0</TargetFramework>
     <Nullable>enable</Nullable>
-    <Title>Pianomino</Title>
+    <Title>Pianomino.Theory</Title>
     <Description>Primitives for Western music theory concepts</Description>
     <Authors>Tristan Labelle</Authors>
     <Product>Pianomino</Product>

@@ -3,7 +3,7 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 17
 VisualStudioVersion = 17.0.31903.59
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Pianomino", "Pianomino\Pianomino.csproj", "{CEEF56BE-EA89-457A-AD08-2E3DDA33FDEC}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Pianomino.Theory", "Pianomino.Theory\Pianomino.Theory.csproj", "{CEEF56BE-EA89-457A-AD08-2E3DDA33FDEC}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Pianomino.Tests", "Pianomino.Tests\Pianomino.Tests.csproj", "{86071A11-B5F9-48EA-9AF6-DF6F500A9310}"
 EndProject
