@@ -42,8 +42,8 @@ jobs:
       run: dotnet test --configuration Release --no-build --verbosity normal
       
     - name: Package with NuGet
-      #if: github.event_name == 'release'
+      if: github.event_name == 'release'
       run: |
         dotnet pack --configuration Release -p:Version=${{ steps.gitversion.outputs.semVer }} -p:RepositoryUrl="https://github.com/tristanlabelle/Pianomino"
-        dotnet nuget push "Pianomino.Theory/bin/Release/Pianomino.Theory.${{ steps.gitversion.outputs.semVer }}.nupkg" --api-key ${{secrets.NUGETTEST_ORG_API_KEY}} --source https://apiint.nugettest.org/v3/index.json
+        dotnet nuget push "Pianomino.Theory/bin/Release/Pianomino.Theory.${{ steps.gitversion.outputs.semVer }}.nupkg" --api-key ${{secrets.NUGET_ORG_API_KEY}} --source https://api.nuget.org/v3/index.json
 
