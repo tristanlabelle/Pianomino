@@ -20,7 +20,6 @@ public static class DiatonicDegreeEnum
 {
     private static readonly byte[] toChromatic = { 0, 2, 4, 5, 7, 9, 11 };
     private static readonly bool[] perfect = { true, false, false, true, true, false, false };
-    private static readonly string[] solfege = { "do", "re", "mi", "fa", "so", "la", "ti" };
 
     public const int Count = 7;
 
@@ -66,7 +65,6 @@ public static class DiatonicDegreeEnum
 
     public static bool IsPerfect(this DiatonicDegree value) => perfect[(int)value];
 
-    public static string GetSolfegeSyllable(this DiatonicDegree value) => solfege[(int)value];
     public static string GetRomanNumeral(this DiatonicDegree value, RomanNumeralFlags flags = default)
         => RomanNumerals.Get(value.ToNumber(), flags);
 
