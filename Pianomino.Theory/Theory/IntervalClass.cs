@@ -15,6 +15,7 @@ public readonly struct IntervalClass : IEquatable<IntervalClass>
     public static IntervalClass MajorSecond => DiatonicDegree.Second;
     public static IntervalClass AugmentedSecond => DiatonicDegree.Second.Sharp();
     public static IntervalClass MinorThird => DiatonicDegree.Third.Flat();
+    public static IntervalClass MajorThird => DiatonicDegree.Third;
     public static IntervalClass PerfectFourth => DiatonicDegree.Fourth;
     public static IntervalClass AugmentedFourth => DiatonicDegree.Fourth.Sharp();
     public static IntervalClass DiminishedFifth => DiatonicDegree.Fifth.Flat();
