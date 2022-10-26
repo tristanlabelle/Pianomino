@@ -15,10 +15,10 @@ public readonly struct NotePitch : IEquatable<NotePitch>, IComparable<NotePitch>
 {
     private static readonly Regex regex = new(
         @"\A
-				(?<letter>[A-G])
-				( (?<sharps>\#+|♯+) | (?<flats>b+|♭+) )?
-				(?<octave>-?[0-9]+)
-			\Z",
+            (?<letter>[A-G])
+            ( (?<sharps>\#+|♯+) | (?<flats>b+|♭+) )?
+            (?<octave>-?[0-9]+)
+        \Z",
         RegexOptions.CultureInvariant | RegexOptions.IgnorePatternWhitespace);
 
     public static readonly NotePitch C0 = NaturalPitch.C0;

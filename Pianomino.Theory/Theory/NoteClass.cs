@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Runtime.InteropServices;
+using System.Text.RegularExpressions;
 
 namespace Pianomino.Theory;
 
@@ -9,6 +10,13 @@ namespace Pianomino.Theory;
 [StructLayout(LayoutKind.Sequential, Size = 1)]
 public readonly struct NoteClass : IEquatable<NoteClass>
 {
+    private static readonly Regex regex = new(
+        @"\A
+            (?<letter>[A-G])
+            ( (?<sharps>\#+|♯+) | (?<flats>b+|♭+) )?
+        \Z",
+        RegexOptions.CultureInvariant | RegexOptions.IgnorePatternWhitespace);
+
     private static sbyte[] lettersToFifths = { 0, 2, 4, -1, 1, 3, 5 };
     private static NoteLetter[] fifthsToLetters = { NoteLetter.C, NoteLetter.G, NoteLetter.D, NoteLetter.A, NoteLetter.E, NoteLetter.B, NoteLetter.F };
 
@@ -65,11 +73,20 @@ public readonly struct NoteClass : IEquatable<NoteClass>
     public static NoteClass A(Alteration alteration = Alteration.Natural) => new(NoteLetter.A, alteration);
     public static NoteClass B(Alteration alteration = Alteration.Natural) => new(NoteLetter.B, alteration);
 
+    public static NoteClass Parse(string str)
+    {
+        var match = regex.Match(str);
+        if (!match.Success) throw new FormatException();
+        var letter = NoteLetterEnum.TryFromChar(match.Groups["letter"].Value[0])!.Value;
+        int alteration = (match.Groups["sharps"].Value?.Length ?? 0) - (match.Groups["flats"].Value?.Length ?? 0);
+        return new(letter, (Alteration)alteration);
+    }
+
     public static NoteClass Add(NoteClass value, Interval interval) => (value.WithOctave(0) + interval).Class;
     public static NoteClass Subtract(NoteClass value, Interval interval) => (value.WithOctave(0) - interval).Class;
     public static NoteClass operator +(NoteClass value, Interval interval) => Add(value, interval);
     public static NoteClass operator -(NoteClass value, Interval interval) => Subtract(value, interval);
-    
+
     public static NoteClass Add(NoteClass value, IntervalClass intervalClass) => Add(value, intervalClass.WithOctaveZero());
     public static NoteClass Subtract(NoteClass value, IntervalClass intervalClass) => Subtract(value, intervalClass.WithOctaveZero());
     public static NoteClass operator +(NoteClass value, IntervalClass intervalClass) => Add(value, intervalClass);
