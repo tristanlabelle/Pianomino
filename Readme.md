@@ -1,6 +1,11 @@
 # Pianomino
 
-A library for representing the music theory concepts of Western music in 12-tone equal temperament.
+A .NET library for representing the music theory concepts of Western music in 12-tone equal temperament.
+
+Pianomino follows C# and .NET best practices: 
+- Immutable value types with compact, non-redundant data representations
+- Rich structs and enums over primitive types
+- Tasteful use of extension methods and operator overloading
 
 ## Note & interval types
 
