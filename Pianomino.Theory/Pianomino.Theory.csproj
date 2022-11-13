@@ -7,11 +7,12 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="System.Collections.Immutable" Version="1.5.0" />
+    <PackageReference Include="System.Collections.Immutable" Version="7.0.0" />
   </ItemGroup>
 
   <ItemGroup>
-    <None Include="..\Readme.md" Pack="true" PackagePath="\"/>
+    <Compile Include="..\Shared\UnreachableException.cs" />
+    <None Include="..\Readme.md" Pack="true" PackagePath="\" />
   </ItemGroup>
 
 </Project>
