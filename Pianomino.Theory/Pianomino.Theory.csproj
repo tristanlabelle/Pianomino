@@ -1,13 +1,8 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFramework>net6.0</TargetFramework>
-    <Nullable>enable</Nullable>
     <Title>Pianomino.Theory</Title>
     <Description>Primitives for Western music theory concepts</Description>
-    <Authors>Tristan Labelle</Authors>
-    <Product>Pianomino</Product>
-    <PackageLicenseExpression>Unlicense</PackageLicenseExpression>
     <PackageReadmeFile>Readme.md</PackageReadmeFile>
   </PropertyGroup>
 
