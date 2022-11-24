@@ -3,7 +3,6 @@
     <TargetFramework>net7.0</TargetFramework>
     <LangVersion>latest</LangVersion>
     <Nullable>enable</Nullable>
-    <AvaloniaVersion>11.0.0-preview4</AvaloniaVersion>
     <PackageLicenseExpression>Unlicense</PackageLicenseExpression>
     <Authors>Tristan Labelle</Authors>
     <Product>Pianomino</Product>
