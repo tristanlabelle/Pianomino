@@ -23,6 +23,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\Pianomino.Formats.iReal\Pianomino.Formats.iReal.csproj" />
+    <ProjectReference Include="..\Pianomino.Formats.Midi\Pianomino.Formats.Midi.csproj" />
     <ProjectReference Include="..\Pianomino.Formats.Smufl\Pianomino.Formats.Smufl.csproj" />
     <ProjectReference Include="..\Pianomino.Theory\Pianomino.Theory.csproj" />
   </ItemGroup>
