@@ -11,6 +11,8 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Pianomino.Formats.Smufl", "
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Pianomino.Formats.iReal", "Pianomino.Formats.iReal\Pianomino.Formats.iReal.csproj", "{58C45920-259F-4B4F-8EB7-34E151CEAD7E}"
 EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Pianomino.Formats.Midi", "Pianomino.Formats.Midi\Pianomino.Formats.Midi.csproj", "{AFC77364-CD7F-4625-86D8-AFDBC91D252B}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -87,6 +89,22 @@ Global
 		{58C45920-259F-4B4F-8EB7-34E151CEAD7E}.Release|x64.Build.0 = Release|Any CPU
 		{58C45920-259F-4B4F-8EB7-34E151CEAD7E}.Release|x86.ActiveCfg = Release|Any CPU
 		{58C45920-259F-4B4F-8EB7-34E151CEAD7E}.Release|x86.Build.0 = Release|Any CPU
+		{AFC77364-CD7F-4625-86D8-AFDBC91D252B}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{AFC77364-CD7F-4625-86D8-AFDBC91D252B}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{AFC77364-CD7F-4625-86D8-AFDBC91D252B}.Debug|arm64.ActiveCfg = Debug|Any CPU
+		{AFC77364-CD7F-4625-86D8-AFDBC91D252B}.Debug|arm64.Build.0 = Debug|Any CPU
+		{AFC77364-CD7F-4625-86D8-AFDBC91D252B}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{AFC77364-CD7F-4625-86D8-AFDBC91D252B}.Debug|x64.Build.0 = Debug|Any CPU
+		{AFC77364-CD7F-4625-86D8-AFDBC91D252B}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{AFC77364-CD7F-4625-86D8-AFDBC91D252B}.Debug|x86.Build.0 = Debug|Any CPU
+		{AFC77364-CD7F-4625-86D8-AFDBC91D252B}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{AFC77364-CD7F-4625-86D8-AFDBC91D252B}.Release|Any CPU.Build.0 = Release|Any CPU
+		{AFC77364-CD7F-4625-86D8-AFDBC91D252B}.Release|arm64.ActiveCfg = Release|Any CPU
+		{AFC77364-CD7F-4625-86D8-AFDBC91D252B}.Release|arm64.Build.0 = Release|Any CPU
+		{AFC77364-CD7F-4625-86D8-AFDBC91D252B}.Release|x64.ActiveCfg = Release|Any CPU
+		{AFC77364-CD7F-4625-86D8-AFDBC91D252B}.Release|x64.Build.0 = Release|Any CPU
+		{AFC77364-CD7F-4625-86D8-AFDBC91D252B}.Release|x86.ActiveCfg = Release|Any CPU
+		{AFC77364-CD7F-4625-86D8-AFDBC91D252B}.Release|x86.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

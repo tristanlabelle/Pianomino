@@ -1,8 +1,8 @@
 <Project Sdk="Microsoft.NET.Sdk">
-  <PropertyGroup>
-    <Title>Pianomino.Formats.iReal</Title>
-    <Description>An object model for reading and writing iRealPro chart data.</Description>
-  </PropertyGroup>
+    <PropertyGroup>
+        <Title>Pianomino.Formats.iReal</Title>
+        <Description>An object model for reading and writing iRealPro chart data.</Description>
+    </PropertyGroup>
     <ItemGroup>
         <Compile Include="..\Shared\EnumerantAttributes.cs" />
         <Compile Include="..\Shared\EnumerantStringAttribute.cs" />
@@ -10,6 +10,6 @@
         <Compile Include="..\Shared\UnreachableException.cs" />
     </ItemGroup>
     <ItemGroup>
-      <ProjectReference Include="..\Pianomino.Theory\Pianomino.Theory.csproj" />
+        <ProjectReference Include="..\Pianomino.Theory\Pianomino.Theory.csproj" />
     </ItemGroup>
 </Project>

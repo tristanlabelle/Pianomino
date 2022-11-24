@@ -1,0 +1,9 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+    <ItemGroup>
+        <ProjectReference Include="..\Pianomino.Theory\Pianomino.Theory.csproj" />
+    </ItemGroup>
+    <ItemGroup>
+        <Compile Include="..\Shared\SpanExtensions.cs" />
+        <Compile Include="..\Shared\UnreachableException.cs" />
+    </ItemGroup>
+</Project>
