@@ -1,13 +1,17 @@
 # Pianomino
 
-A .NET library for representing the music theory concepts of Western music in 12-tone equal temperament.
+.NET libraries for manipulating concepts and formats of Western music.
 
 Pianomino follows C# and .NET best practices: 
 - Immutable value types with compact, non-redundant data representations
 - Rich structs and enums over primitive types
 - Tasteful use of extension methods and operator overloading
 
-## Note & interval types
+## Pianomino.Theory
+
+Basic types for concepts of Western music theory in 12-tone equal temperament.
+
+### Note & interval types
 
 `Pianomino.Theory`'s representation of musical notes and intervals is split into three categories:
 
@@ -28,3 +32,10 @@ In addition, `Pianomino.Theory` includes octave-aware and octave-agnostic types.
 | Chromatic, octave-agnostic | ChromaticClass | ChromaticDegree |
 | Chromatic, octave-aware    | ChromaticPitch | int             |
 
+## Pianomino.Formats.Smufl
+
+Provides types representing Standard Music Font Layout (SMuFL) concepts and file format I/O.
+
+## Pianomino.Formats.iReal
+
+Supports I/O of chart formats from the iReal Pro application.
