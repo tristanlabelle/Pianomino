@@ -218,26 +218,26 @@ public static class StatusByteEnum
 
     public static bool IsSystemRealTimeMessage(this StatusByte value) => (byte)value >= 0xF8;
 
-    public static MessageDataLengthType GetDataLengthType(this StatusByte value)
+    public static ShortPayloadLengthType GetPayloadLengthType(this StatusByte value)
         => (byte)value switch
         {
             < 0x80 => throw new ArgumentOutOfRangeException(),
-            < 0xC0 => MessageDataLengthType.TwoBytes, // NoteOn, NoteOff, KeyPressure, ControlChange
-                < 0xE0 => MessageDataLengthType.OneByte, // ProgramChange, ChannelPressure
-                < 0xF0 => MessageDataLengthType.TwoBytes, // PitchBend
-                (byte)StatusByte.SystemExclusive => MessageDataLengthType.Variable,
-            (byte)StatusByte.TimeCode => MessageDataLengthType.OneByte,
-            (byte)StatusByte.SongPosition => MessageDataLengthType.TwoBytes,
-            (byte)StatusByte.SongSelect => MessageDataLengthType.OneByte,
-            (byte)StatusByte.UndefinedF4 => MessageDataLengthType.Variable,
-            (byte)StatusByte.UndefinedF5 => MessageDataLengthType.Variable,
-            (byte)StatusByte.TuneRequest => MessageDataLengthType.ZeroBytes,
-            (byte)StatusByte.EndOfExclusive => MessageDataLengthType.ZeroBytes,
+            < 0xC0 => ShortPayloadLengthType.TwoBytes, // NoteOn, NoteOff, KeyPressure, ControlChange
+                < 0xE0 => ShortPayloadLengthType.OneByte, // ProgramChange, ChannelPressure
+                < 0xF0 => ShortPayloadLengthType.TwoBytes, // PitchBend
+                (byte)StatusByte.SystemExclusive => ShortPayloadLengthType.Variable,
+            (byte)StatusByte.TimeCode => ShortPayloadLengthType.OneByte,
+            (byte)StatusByte.SongPosition => ShortPayloadLengthType.TwoBytes,
+            (byte)StatusByte.SongSelect => ShortPayloadLengthType.OneByte,
+            (byte)StatusByte.UndefinedF4 => ShortPayloadLengthType.Variable,
+            (byte)StatusByte.UndefinedF5 => ShortPayloadLengthType.Variable,
+            (byte)StatusByte.TuneRequest => ShortPayloadLengthType.ZeroBytes,
+            (byte)StatusByte.EndOfExclusive => ShortPayloadLengthType.ZeroBytes,
             >= 0xF8 => 0 // Real-time
             };
 
-    public static int? GetDataLength(this StatusByte value)
-        => GetDataLengthType(value).ToNullableByteCount();
+    public static int? GetPayloadLength(this StatusByte value)
+        => GetPayloadLengthType(value).ToNullableByteCount();
 
     public static bool IsUndefined(this StatusByte value)
         => value switch

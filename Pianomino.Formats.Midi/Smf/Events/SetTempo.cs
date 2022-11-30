@@ -1,26 +1,23 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Collections.Immutable;
-using System.Linq;
 using System.Text;
-using System.Threading.Tasks;
 
-namespace Pianomino.Formats.Midi.Smf.Messages;
+namespace Pianomino.Formats.Midi.Smf.Events;
 
-public sealed class SetTempo : MetaMessage
+public sealed class SetTempo : MetaEvent
 {
-    public const int DataLength = 3;
+    public const int PayloadLength = 3;
 
     public Tempo Tempo { get; }
 
     public SetTempo(Tempo tempo) => this.Tempo = tempo;
 
-    protected override MetaMessageTypeByte GetMetaEventType() => MetaMessageTypeByte.SetTempo;
+    public override MetaEventTypeByte MetaType => MetaEventTypeByte.SetTempo;
 
-    public override RawSmfMessage ToRaw(Encoding encoding)
+    public override RawEvent ToRaw(Encoding encoding)
     {
         int value = Tempo.MicrosecondsPerQuarterNote;
-        return RawSmfMessage.CreateMeta(MetaMessageTypeByte.SetTempo,
+        return RawEvent.CreateMeta(MetaEventTypeByte.SetTempo,
             ImmutableArray.Create((byte)(value >> 16), (byte)(value >> 8), (byte)value));
     }
 
@@ -28,7 +25,7 @@ public sealed class SetTempo : MetaMessage
 
     public static SetTempo FromBytes(ReadOnlySpan<byte> bytes)
     {
-        if (bytes.Length != DataLength) throw new ArgumentException();
+        if (bytes.Length != PayloadLength) throw new ArgumentException();
         return FromBytes(bytes[0], bytes[1], bytes[2]);
     }
 

@@ -33,10 +33,9 @@ public sealed class SmfReader
     private long trackEndPosition;
     private long timeInTicks;
     private int eventDeltaTime; // iff State == Event
-    private RawSmfMessage eventMessage; // iff State == Event
+    private RawEvent eventMessage; // iff State == Event
     private StatusByte runningStatus;
     private bool isRunningStatusInvalidated;
-    private bool isInPacketedSysEx;
     private bool hasEndOfTrackMetaEvent;
     public SmfReaderState State { get; private set; }
 
@@ -80,7 +79,7 @@ public sealed class SmfReader
                 if (chunkHeader.Length > SmfFormat.HeaderChunk.Length)
                     binaryReader.BaseStream.Seek(chunkHeader.Length - SmfFormat.HeaderChunk.Length, SeekOrigin.Current);
 
-                if (validationErrorHandler is object)
+                if (validationErrorHandler is not null)
                 {
                     if ((int)headerChunk.TrackFormat >= 3)
                         validationErrorHandler(SmfValidationError.InvalidMThdFormat);
@@ -131,7 +130,7 @@ public sealed class SmfReader
 
     public long GetTimeInTicks() => IsInTrack ? timeInTicks : throw new InvalidOperationException();
     public int GetEventTimeDelta() => State == SmfReaderState.Event ? eventDeltaTime : throw new InvalidOperationException();
-    public RawSmfMessage GetEventMessage() => State == SmfReaderState.Event ? eventMessage : throw new InvalidOperationException();
+    public RawEvent GetEvent() => State == SmfReaderState.Event ? eventMessage : throw new InvalidOperationException();
 
     public SmfReaderState Read()
     {
@@ -206,7 +205,7 @@ public sealed class SmfReader
         }
     }
 
-    private (int DeltaTime, RawSmfMessage Message) ReadEvent()
+    private (int DeltaTime, RawEvent Message) ReadEvent()
     {
         var deltaTime = ReadVariableLengthInt(binaryReader);
         var message = ReadMessage();
@@ -217,21 +216,19 @@ public sealed class SmfReader
         return (deltaTime, message);
     }
 
-    private RawSmfMessage ReadMessage()
+    private RawEvent ReadMessage()
     {
         var firstByte = binaryReader.ReadByte();
         return firstByte < 0xF0
-            ? RawSmfMessage.FromWireMessage(ReadChannelMessage(firstByte))
-            : ReadNonChannelMessage(firstByte);
+            ? RawEvent.FromMessage(ReadChannelMessage(firstByte))
+            : ReadNonChannelMessage((EventHeaderByte)firstByte);
     }
 
     private RawMessage ReadChannelMessage(byte firstByte)
     {
-        CancelSysEx();
-
         StatusByte status;
         byte firstDataByte;
-        if (RawMessage.IsValidDataByte(firstByte))
+        if (RawMessage.IsValidPayloadByte(firstByte))
         {
             // Data without status, must be using running status
             if (runningStatus == 0) throw new FormatException();
@@ -260,7 +257,7 @@ public sealed class SmfReader
             firstDataByte &= 0x7F;
         }
 
-        bool hasOneDataByte = status.GetDataLengthType() == MessageDataLengthType.OneByte;
+        bool hasOneDataByte = status.GetPayloadLengthType() == ShortPayloadLengthType.OneByte;
         if (hasOneDataByte) return RawMessage.Create(status, firstDataByte);
 
         byte secondDataByte = binaryReader.ReadByte();
@@ -273,57 +270,33 @@ public sealed class SmfReader
         return RawMessage.Create(status, firstDataByte, secondDataByte);
     }
 
-    private RawSmfMessage ReadNonChannelMessage(byte status)
+    private RawEvent ReadNonChannelMessage(EventHeaderByte headerByte)
     {
         isRunningStatusInvalidated = true;
 
-        if (status == RawSmfMessage.Status_SysEx || status == RawSmfMessage.Status_Escape)
+        if (headerByte == EventHeaderByte.Escape_SysEx || headerByte == EventHeaderByte.Escape)
         {
             int length = ReadVariableLengthInt(binaryReader);
             var bytes = binaryReader.ReadBytes(length);
-            if (status == RawSmfMessage.Status_Escape && !isInPacketedSysEx)
-            {
-                return RawSmfMessage.CreateEscape(bytes.ToImmutableArray());
-            }
-            else
-            {
-                if (status == RawSmfMessage.Status_SysEx)
-                    CancelSysEx();
-
-                bool terminated = bytes.Length > 0 && bytes[^1] == 0xF7;
-                var data = ImmutableArray.Create(bytes, start: 0, length: terminated ? bytes.Length - 1 : bytes.Length);
-                isInPacketedSysEx = !terminated;
-                return RawSmfMessage.CreateSystemExclusive(data, first: status == RawSmfMessage.Status_SysEx, last: terminated);
-            }
+            return RawEvent.CreateEscape(sysExPrefix: headerByte == EventHeaderByte.Escape_SysEx, bytes.ToImmutableArray());
         }
-        else if (status == RawSmfMessage.Status_Meta)
+        else if (headerByte == EventHeaderByte.Meta)
         {
-            CancelSysEx();
-
-            var metaEventType = (MetaMessageTypeByte)binaryReader.ReadByte();
+            var metaEventType = (MetaEventTypeByte)binaryReader.ReadByte();
             int length = ReadVariableLengthInt(binaryReader);
             var data = binaryReader.ReadBytes(length).ToImmutableArray();
 
             if (TrackFormat != SmfTrackFormat.Independent && metaEventType.IsFirstTrackOnly() && trackIndex != 0)
                 validationErrorHandler?.Invoke(SmfValidationError.InvalidTrackForMetaEvent);
 
-            if (metaEventType == MetaMessageTypeByte.EndOfTrack)
+            if (metaEventType == MetaEventTypeByte.EndOfTrack)
                 hasEndOfTrackMetaEvent = true;
 
-            return RawSmfMessage.CreateMeta(metaEventType, data);
+            return RawEvent.CreateMeta(metaEventType, data);
         }
         else
         {
             throw new FormatException();
-        }
-    }
-
-    private void CancelSysEx()
-    {
-        if (isInPacketedSysEx)
-        {
-            validationErrorHandler?.Invoke(SmfValidationError.UnterminatedSysEx);
-            isInPacketedSysEx = false;
         }
     }
 
@@ -357,7 +330,7 @@ public sealed class SmfReader
             }
             else if (reader.State == SmfReaderState.Event)
             {
-                sink.AddEvent((uint)reader.GetEventTimeDelta(), reader.GetEventMessage());
+                sink.AddEvent((uint)reader.GetEventTimeDelta(), reader.GetEvent());
             }
         }
 
@@ -373,7 +346,7 @@ public sealed class SmfReader
         return builderSink.Build();
     }
 
-    private static SmfFormat.ChunkHeader ReadChunkHeader(BinaryReader binaryReader) => new SmfFormat.ChunkHeader
+    private static SmfFormat.ChunkHeader ReadChunkHeader(BinaryReader binaryReader) => new()
     {
         Type = (SmfFormat.ChunkType)binaryReader.ReadBigEndianUInt32(),
         Length = binaryReader.ReadBigEndianUInt32()

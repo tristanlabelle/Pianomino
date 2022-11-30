@@ -19,8 +19,8 @@ public static class SmfTrackMergerTests
             sink.Begin(SmfTrackFormat.Simultaneous, TimeDivision.OneTickPerQuarterNote);
 
             sink.BeginTrack();
-            sink.AddEvent(0, new Messages.TextEvent(MetaMessageTypeByte.TrackName, "Hello").ToRaw());
-            sink.AddEvent(2, new Messages.TextEvent(MetaMessageTypeByte.CuePoint, "World").ToRaw());
+            sink.AddEvent(0, new Events.TextEvent(MetaEventTypeByte.TrackName, "Hello").ToRaw());
+            sink.AddEvent(2, new Events.TextEvent(MetaEventTypeByte.CuePoint, "World").ToRaw());
             sink.EndTrack();
 
             sink.BeginTrack();
@@ -40,17 +40,20 @@ public static class SmfTrackMergerTests
         var track = Assert.Single(data.Tracks);
         Assert.Equal(6, track.Events.Length);
 
-        AssertTicksStatus(track.Events[0], 0, SmfStatusBytes.Meta);
-        AssertTicksStatus(track.Events[1], 0, StatusByte.NoteOn_Channel1);
-        AssertTicksStatus(track.Events[2], 1, StatusByte.NoteOff_Channel1);
-        AssertTicksStatus(track.Events[3], 2, SmfStatusBytes.Meta);
-        AssertTicksStatus(track.Events[4], 2, StatusByte.NoteOn_Channel2);
-        AssertTicksStatus(track.Events[5], 3, StatusByte.NoteOff_Channel2);
+        AssertTicksAndHeaderByte(track.Events[0], 0, EventHeaderByte.Meta);
+        AssertTicksAndHeaderByte(track.Events[1], 0, StatusByte.NoteOn_Channel1);
+        AssertTicksAndHeaderByte(track.Events[2], 1, StatusByte.NoteOff_Channel1);
+        AssertTicksAndHeaderByte(track.Events[3], 2, EventHeaderByte.Meta);
+        AssertTicksAndHeaderByte(track.Events[4], 2, StatusByte.NoteOn_Channel2);
+        AssertTicksAndHeaderByte(track.Events[5], 3, StatusByte.NoteOff_Channel2);
     }
 
-    private static void AssertTicksStatus(SmfData.Event @event, long expectedTicks, StatusByte expectedStatus)
+    private static void AssertTicksAndHeaderByte(SmfData.TrackEvent @event, long ticks, EventHeaderByte headerByte)
     {
-        Assert.Equal(expectedTicks, @event.TimeInTicks);
-        Assert.Equal(expectedStatus, (StatusByte)@event.Message.Status);
+        Assert.Equal(ticks, @event.TimeInTicks);
+        Assert.Equal(headerByte, @event.Event.HeaderByte);
     }
+
+    private static void AssertTicksAndHeaderByte(SmfData.TrackEvent @event, long ticks, StatusByte headerByte)
+        => AssertTicksAndHeaderByte(@event, ticks, (EventHeaderByte)(byte)headerByte);
 }

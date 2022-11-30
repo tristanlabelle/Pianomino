@@ -12,15 +12,15 @@ namespace Pianomino.Formats.Midi.Smf;
 /// </summary>
 public sealed partial record SmfData
 {
-    public readonly struct Event
+    public readonly struct TrackEvent
     {
         public long TimeInTicks { get; init; }
-        public RawSmfMessage Message { get; init; }
+        public RawEvent Event { get; init; }
     }
 
     public readonly struct Track
     {
-        public ImmutableArray<Event> Events { get; init; }
+        public ImmutableArray<TrackEvent> Events { get; init; }
     }
 
     public bool AreTracksIndependent { get; init; }

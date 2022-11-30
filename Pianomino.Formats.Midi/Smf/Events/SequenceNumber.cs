@@ -5,9 +5,9 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace Pianomino.Formats.Midi.Smf.Messages;
+namespace Pianomino.Formats.Midi.Smf.Events;
 
-public sealed class SequenceNumber : MetaMessage
+public sealed class SequenceNumber : MetaEvent
 {
     public static SequenceNumber Auto { get; } = new SequenceNumber(value: null);
 
@@ -15,12 +15,13 @@ public sealed class SequenceNumber : MetaMessage
 
     public SequenceNumber(ushort? value) => this.Number = value;
 
-    public override RawSmfMessage ToRaw(Encoding encoding)
-        => RawSmfMessage.CreateMeta(MetaMessageTypeByte.SequenceNumber,
+    public override MetaEventTypeByte MetaType => MetaEventTypeByte.SequenceNumber;
+
+    public override RawEvent ToRaw(Encoding encoding)
+        => RawEvent.CreateMeta(MetaEventTypeByte.SequenceNumber,
             Number is ushort number ? ImmutableArray.Create((byte)(number >> 8), (byte)number) : ImmutableArray<byte>.Empty);
 
     public override string ToString() => $"SequenceNumber({Number?.ToString() ?? "Auto"})";
-    protected override MetaMessageTypeByte GetMetaEventType() => MetaMessageTypeByte.SequenceNumber;
 
     public static SequenceNumber? TryFromData(ImmutableArray<byte> data)
     {

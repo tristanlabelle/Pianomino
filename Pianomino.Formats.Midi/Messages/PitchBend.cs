@@ -31,7 +31,7 @@ public sealed class PitchBend : ChannelMessage
 
     public static short ValueBytesToShort(byte first, byte second)
     {
-        if (!RawMessage.IsValidDataByte(first) || !RawMessage.IsValidDataByte(second)) throw new ArgumentOutOfRangeException();
+        if (!RawMessage.IsValidPayloadByte(first) || !RawMessage.IsValidPayloadByte(second)) throw new ArgumentOutOfRangeException();
         return (short)((((int)second << 7) | first) + MinimumValue);
     }
 

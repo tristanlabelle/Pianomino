@@ -24,9 +24,9 @@ public static class MessageDecoderTests
         var message = FeedNoWarning(decoder, velocity)!.Value;
 
         Assert.Equal(status, message.Status);
-        Assert.Equal(2, message.Data.Length);
-        Assert.Equal(note, message.Data[0]);
-        Assert.Equal(velocity, message.Data[1]);
+        Assert.Equal(2, message.Payload.Length);
+        Assert.Equal(note, message.Payload[0]);
+        Assert.Equal(velocity, message.Payload[1]);
     }
 
     [Fact]
@@ -41,11 +41,11 @@ public static class MessageDecoderTests
         var message = FeedNoWarning(decoder, (byte)StatusByte.EndOfExclusive)!.Value;
 
         Assert.Equal(StatusByte.SystemExclusive, message.Status);
-        Assert.Equal(4, message.Data.Length);
-        Assert.Equal(0, message.Data[0]);
-        Assert.Equal(1, message.Data[1]);
-        Assert.Equal(2, message.Data[2]);
-        Assert.Equal(3, message.Data[3]);
+        Assert.Equal(4, message.Payload.Length);
+        Assert.Equal(0, message.Payload[0]);
+        Assert.Equal(1, message.Payload[1]);
+        Assert.Equal(2, message.Payload[2]);
+        Assert.Equal(3, message.Payload[3]);
     }
 
     [Fact]
@@ -66,8 +66,8 @@ public static class MessageDecoderTests
         FeedNoOutput(decoder, note);
         var message = FeedNoWarning(decoder, 0)!.Value;
         Assert.Equal(status, message.Status);
-        Assert.Equal(note, message.Data[0]);
-        Assert.Equal(0, message.Data[1]);
+        Assert.Equal(note, message.Payload[0]);
+        Assert.Equal(0, message.Payload[1]);
     }
 
     [Fact]

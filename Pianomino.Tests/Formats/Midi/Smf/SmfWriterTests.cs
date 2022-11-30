@@ -18,7 +18,7 @@ public static class SmfWriterTests
             writer.EndTrack(); // Should be automatically added
 
             writer.BeginTrack();
-            writer.WriteMeta(0, MetaMessageTypeByte.EndOfTrack, ReadOnlySpan<byte>.Empty);
+            writer.WriteMeta(0, MetaEventTypeByte.EndOfTrack, ReadOnlySpan<byte>.Empty);
             writer.EndTrack(); // Should not be added
         }
 
@@ -29,7 +29,7 @@ public static class SmfWriterTests
         {
             Assert.Equal(SmfReaderState.StartOfTrack, reader.Read());
             Assert.Equal(SmfReaderState.Event, reader.Read());
-            Assert.Equal(MetaMessageTypeByte.EndOfTrack, reader.GetEventMessage().GetMetaType());
+            Assert.Equal(MetaEventTypeByte.EndOfTrack, reader.GetEvent().GetMetaType());
             Assert.Equal(SmfReaderState.EndOfTrack, reader.Read());
         }
 
@@ -44,7 +44,7 @@ public static class SmfWriterTests
         using (var writer = new SmfWriter(stream, transferOwnership: false, SmfTrackFormat.Simultaneous, TimeDivision.OneTickPerQuarterNote))
         {
             writer.BeginTrack();
-            writer.Write(0, new Messages.SequenceNumber(1).ToRaw());
+            writer.Write(0, new Events.SequenceNumber(1).ToRaw());
             writer.EndTrack();
 
             writer.BeginTrack();

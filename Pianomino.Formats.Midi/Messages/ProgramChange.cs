@@ -10,7 +10,7 @@ public sealed class ProgramChange : ChannelMessage
     public ProgramChange(Channel channel, GeneralMidiProgram program)
         : base(channel)
     {
-        if (!RawMessage.IsValidDataByte((byte)program)) throw new ArgumentOutOfRangeException(nameof(program));
+        if (!RawMessage.IsValidPayloadByte((byte)program)) throw new ArgumentOutOfRangeException(nameof(program));
         this.Program = program;
     }
 

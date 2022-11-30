@@ -70,7 +70,7 @@ public sealed class MessageDecoder
             {
                 runningStatus.OnNewStatus(asStatusByte);
 
-                remainingDataByteCount = asStatusByte.GetDataLength() ?? int.MaxValue;
+                remainingDataByteCount = asStatusByte.GetPayloadLength() ?? int.MaxValue;
                 if (remainingDataByteCount == 0) return RawMessage.Create(asStatusByte);
 
                 bufferedStatus = asStatusByte;
@@ -85,7 +85,7 @@ public sealed class MessageDecoder
                 }
 
                 var status = runningStatus.Current!.Value; // Not null by test above
-                if (status.GetDataLengthType() == MessageDataLengthType.OneByte)
+                if (status.GetPayloadLengthType() == ShortPayloadLengthType.OneByte)
                     return RawMessage.Create(status, @byte);
 
                 // Two-byte channel message

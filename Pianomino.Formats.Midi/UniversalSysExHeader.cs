@@ -17,9 +17,9 @@ public readonly struct UniversalSysExHeader
 
     public UniversalSysExHeader(UniversalSysExKind kind, byte deviceId, byte subId2)
     {
-        if (!RawMessage.IsValidDataByte(deviceId))
+        if (!RawMessage.IsValidPayloadByte(deviceId))
             throw new ArgumentOutOfRangeException(nameof(deviceId));
-        if (!RawMessage.IsValidDataByte(subId2))
+        if (!RawMessage.IsValidPayloadByte(subId2))
             throw new ArgumentOutOfRangeException(nameof(subId2));
 
         this.Kind = kind;
@@ -29,11 +29,11 @@ public readonly struct UniversalSysExHeader
 
     public UniversalSysExHeader(bool realTime, byte deviceId, byte subId1, byte subId2)
     {
-        if (!RawMessage.IsValidDataByte(deviceId))
+        if (!RawMessage.IsValidPayloadByte(deviceId))
             throw new ArgumentOutOfRangeException(nameof(deviceId));
-        if (!RawMessage.IsValidDataByte(subId1))
+        if (!RawMessage.IsValidPayloadByte(subId1))
             throw new ArgumentOutOfRangeException(nameof(subId1));
-        if (!RawMessage.IsValidDataByte(subId2))
+        if (!RawMessage.IsValidPayloadByte(subId2))
             throw new ArgumentOutOfRangeException(nameof(subId2));
 
         this.Kind = (UniversalSysExKind)subId1;

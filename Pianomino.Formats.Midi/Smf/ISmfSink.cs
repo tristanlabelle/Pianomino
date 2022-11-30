@@ -11,11 +11,10 @@ public interface ISmfSink
     void Begin(SmfTrackFormat format, TimeDivision timeDivision);
 
     void BeginTrack();
-    void AddEvent(uint timeDelta, in RawSmfMessage message);
+    void AddEvent(uint timeDelta, in RawEvent message);
     void AddChannelEvent(uint timeDelta, StatusByte status, byte firstDataByte, byte secondDataByte = 0);
-    void AddSysExEvent(uint timeDelta, bool continuation, ReadOnlySpan<byte> data, bool terminated);
-    void AddEscapeEvent(uint timeDelta, ReadOnlySpan<byte> data);
-    void AddMetaEvent(uint timeDelta, MetaMessageTypeByte type, ReadOnlySpan<byte> data);
+    void AddEscapeEvent(uint timeDelta, bool sysExPrefix, ReadOnlySpan<byte> data);
+    void AddMetaEvent(uint timeDelta, MetaEventTypeByte type, ReadOnlySpan<byte> data);
     void EndTrack();
 
     void End();

@@ -8,8 +8,7 @@ using System.Threading.Tasks;
 namespace Pianomino.Formats.Midi.Messages;
 
 /// <summary>
-/// Base class for immutable MIDI messages,
-/// whether over the wire or in standard midi files.
+/// Base class for immutable MIDI messages.
 /// </summary>
 public abstract class Message
 {
@@ -29,15 +28,15 @@ public abstract class Message
         {
             return channelMessageType switch
             {
-                ChannelMessageType.NoteOff => new NoteMessage(NoteMessageType.Off, channel, (NoteKey)message.Data[0], (Velocity)message.Data[1]),
-                ChannelMessageType.NoteOn => new NoteMessage(NoteMessageType.On, channel, (NoteKey)message.Data[0], (Velocity)message.Data[1]),
-                ChannelMessageType.NoteAftertouch => new NoteMessage(NoteMessageType.Aftertouch, channel, (NoteKey)message.Data[0], (Velocity)message.Data[1]),
-                ChannelMessageType.ControlChangeOrMode => ControllerEnum.IsValidByte(message.Data[0])
-                    ? new ControlChange(channel, ControllerEnum.FromByte(message.Data[0])!.Value, message.Data[1])
-                    : new ChannelMode(channel, ChannelModeOperationEnum.FromByte(message.Data[0])!.Value, message.Data[1]),
-                ChannelMessageType.ProgramChange => new ProgramChange(channel, (GeneralMidiProgram)message.Data[0]),
-                ChannelMessageType.ChannelAftertouch => new ChannelAftertouch(channel, (Velocity)message.Data[0]),
-                ChannelMessageType.PitchBend => new PitchBend(channel, PitchBend.ValueBytesToShort(message.Data[0], message.Data[1])),
+                ChannelMessageType.NoteOff => new NoteMessage(NoteMessageType.Off, channel, (NoteKey)message.Payload[0], (Velocity)message.Payload[1]),
+                ChannelMessageType.NoteOn => new NoteMessage(NoteMessageType.On, channel, (NoteKey)message.Payload[0], (Velocity)message.Payload[1]),
+                ChannelMessageType.NoteAftertouch => new NoteMessage(NoteMessageType.Aftertouch, channel, (NoteKey)message.Payload[0], (Velocity)message.Payload[1]),
+                ChannelMessageType.ControlChangeOrMode => ControllerEnum.IsValidByte(message.Payload[0])
+                    ? new ControlChange(channel, ControllerEnum.FromByte(message.Payload[0])!.Value, message.Payload[1])
+                    : new ChannelMode(channel, ChannelModeOperationEnum.FromByte(message.Payload[0])!.Value, message.Payload[1]),
+                ChannelMessageType.ProgramChange => new ProgramChange(channel, (GeneralMidiProgram)message.Payload[0]),
+                ChannelMessageType.ChannelAftertouch => new ChannelAftertouch(channel, (Velocity)message.Payload[0]),
+                ChannelMessageType.PitchBend => new PitchBend(channel, PitchBend.ValueBytesToShort(message.Payload[0], message.Payload[1])),
                 _ => throw new ArgumentException()
             };
         }
@@ -45,7 +44,7 @@ public abstract class Message
         {
             return message.Status switch
             {
-                StatusByte.SystemExclusive => ToSysEx(message.Data.ToImmutableArray(), sysexFactory, encoding),
+                StatusByte.SystemExclusive => ToSysEx(message.Payload, sysexFactory, encoding),
                 StatusByte.TimeCode => throw new NotImplementedException(),
                 StatusByte.SongPosition => throw new NotImplementedException(),
                 StatusByte.SongSelect => throw new NotImplementedException(),
@@ -62,7 +61,7 @@ public abstract class Message
     public static Message Create(in RawMessage message, Encoding encoding)
         => Create(message, SysExMessage.TryCreateKnown, encoding);
 
-    protected static bool IsValidDataByte(byte value) => RawMessage.IsValidDataByte(value);
+    protected static bool IsValidDataByte(byte value) => RawMessage.IsValidPayloadByte(value);
 
     protected static void AppendBytesString(StringBuilder stringBuilder, ImmutableArray<byte> bytes)
     {

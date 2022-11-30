@@ -10,7 +10,7 @@ public sealed class UnknownSysExMessage : SysExMessage
 
     public UnknownSysExMessage(ImmutableArray<byte> data)
     {
-        if (!RawMessage.AreValidDataBytes(data)) throw new ArgumentException(message: null, paramName: nameof(data));
+        if (!RawMessage.AreValidPayloadBytes(data)) throw new ArgumentException(message: null, paramName: nameof(data));
         this.Data = data;
     }
 

@@ -29,46 +29,45 @@ public readonly struct RawMessage
     public static RawMessage ActiveSensing => new(StatusByte.ActiveSensing);
     public static RawMessage Reset => new(StatusByte.Reset);
 
-    internal readonly ImmutableArray<byte> variableLengthData;
-    internal readonly byte binaryNotStatus; // Binary not so it defaults to 0xFF (System Real Time Reset, data length 0)
-    internal readonly ushort firstTwoDataBytes;
+    internal readonly ImmutableArray<byte> variableLengthPayload;
+    internal readonly byte status_binaryNot; // Binary not so it defaults to 0xFF (System Real Time Reset, data length 0)
+    internal readonly ushort firstTwoPayloadBytes;
 
-    private RawMessage(StatusByte status, ushort firstTwoDataBytes = 0)
+    private RawMessage(StatusByte status, ushort firstTwoPayloadBytes = 0)
     {
-        this.binaryNotStatus = (byte)~status;
-        this.firstTwoDataBytes = firstTwoDataBytes;
-        this.variableLengthData = default;
+        this.status_binaryNot = (byte)~status;
+        this.firstTwoPayloadBytes = firstTwoPayloadBytes;
+        this.variableLengthPayload = default;
     }
 
-    private RawMessage(StatusByte status, ImmutableArray<byte> data)
+    private RawMessage(StatusByte status, ImmutableArray<byte> payload)
     {
-        this.binaryNotStatus = (byte)~status;
-        this.variableLengthData = data;
-        this.firstTwoDataBytes = MessageData.PackFirstTwoBytes(data);
+        this.status_binaryNot = (byte)~status;
+        this.variableLengthPayload = payload;
+        this.firstTwoPayloadBytes = ShortPayload.PackFirstTwoBytes(payload);
     }
 
-    internal RawMessage(StatusByte status, ImmutableArray<byte> data, ushort firstTwoDataBytes)
+    internal RawMessage(StatusByte status, ImmutableArray<byte> payload, ushort firstTwoPayloadBytes)
     {
-        this.binaryNotStatus = (byte)~status;
-        this.variableLengthData = data;
-        this.firstTwoDataBytes = firstTwoDataBytes;
+        this.status_binaryNot = (byte)~status;
+        this.variableLengthPayload = payload;
+        this.firstTwoPayloadBytes = firstTwoPayloadBytes;
     }
 
-    public StatusByte Status => (StatusByte)~binaryNotStatus;
+    public StatusByte Status => (StatusByte)~status_binaryNot;
     public bool IsChannelMessage => Status.IsChannelMessage();
     public bool IsNoteMessage => Status.IsNoteMessage();
     public bool IsNoteOnOffMessage => Status.IsNoteOnOffMessage();
-    public bool IsEffectiveNoteOffMessage => Status.IsNoteOffMessage() || (Status.IsNoteOnMessage() && Data.SecondByteOrZero == 0);
-    public bool IsEffectiveNoteOnMessage => Status.IsNoteOnMessage() && Data.SecondByteOrZero > 0;
+    public bool IsEffectiveNoteOffMessage => Status.IsNoteOffMessage() || (Status.IsNoteOnMessage() && Payload.SecondByteOrZero == 0);
+    public bool IsEffectiveNoteOnMessage => Status.IsNoteOnMessage() && Payload.SecondByteOrZero > 0;
     public bool IsSystemExclusive => Status == StatusByte.SystemExclusive;
-    public MessageData Data => new(Status.GetDataLengthType(), firstTwoDataBytes, variableLengthData);
-    public ImmutableArray<byte> DataArray => Data.ToImmutableArray();
+    public ShortPayload Payload => new(Status.GetPayloadLengthType(), firstTwoPayloadBytes, variableLengthPayload);
 
     public bool AsChannelMessage(out ChannelMessageType type, out Channel channel)
         => Status.AsChannelMessage(out type, out channel);
 
-    public NoteKey GetNoteKey() => IsNoteMessage ? (NoteKey)Data[0] : throw new InvalidOperationException();
-    public Velocity GetNoteVelocityOrPressure() => IsNoteMessage ? (Velocity)Data[1] : throw new InvalidOperationException();
+    public NoteKey GetNoteKey() => IsNoteMessage ? (NoteKey)Payload[0] : throw new InvalidOperationException();
+    public Velocity GetNoteVelocityOrPressure() => IsNoteMessage ? (Velocity)Payload[1] : throw new InvalidOperationException();
 
     internal string GetDebuggerDisplayString()
     {
@@ -90,16 +89,16 @@ public readonly struct RawMessage
             stringBuilder.Append(Status.ToString()).Append('(');
         }
 
-        if (Status == StatusByte.SystemExclusive || Data.Length > 2)
+        if (Status == StatusByte.SystemExclusive || Payload.Length > 2)
         {
-            stringBuilder.Append(Data.Length).Append(" bytes");
+            stringBuilder.Append(Payload.Length).Append(" bytes");
         }
         else
         {
-            for (int i = 0; i < Data.Length; ++i)
+            for (int i = 0; i < Payload.Length; ++i)
             {
                 if (i > 0) stringBuilder.Append(", ");
-                stringBuilder.Append(Data[i]);
+                stringBuilder.Append(Payload[i]);
             }
         }
 
@@ -107,40 +106,40 @@ public readonly struct RawMessage
         return stringBuilder.ToString();
     }
 
-    public static bool IsValidDataByte(byte value) => value < 0x80;
+    public static bool IsValidPayloadByte(byte value) => value < 0x80;
 
-    public static bool AreValidDataBytes(byte firstByte, byte secondByte)
+    public static bool AreValidPayloadBytes(byte firstByte, byte secondByte)
         => (firstByte | secondByte) < 0x80;
 
-    public static bool AreValidDataBytes(MessageData bytes)
+    public static bool AreValidPayloadBytes(ShortPayload bytes)
         => bytes.Length switch
         {
             0 => true,
-            1 => IsValidDataByte(bytes[0]),
-            2 => AreValidDataBytes(bytes[0], bytes[1]),
-            _ => AreValidDataBytes(bytes.ToImmutableArray().AsSpan())
+            1 => IsValidPayloadByte(bytes[0]),
+            2 => AreValidPayloadBytes(bytes[0], bytes[1]),
+            _ => AreValidPayloadBytes(bytes.AsSpan())
         };
 
-    public static bool AreValidDataBytes(ReadOnlySpan<byte> bytes)
+    public static bool AreValidPayloadBytes(ReadOnlySpan<byte> bytes)
     {
         foreach (var b in bytes)
-            if (!IsValidDataByte(b))
+            if (!IsValidPayloadByte(b))
                 return false;
         return true;
     }
 
     #region Factory Methods
-    public static RawMessage Create(StatusByte status, MessageData data)
+    public static RawMessage Create(StatusByte status, ShortPayload data)
     {
-        var lengthType = status.GetDataLengthType();
-        if (lengthType != MessageDataLengthType.Variable && (int)lengthType != data.Length)
+        var lengthType = status.GetPayloadLengthType();
+        if (lengthType != ShortPayloadLengthType.Variable && (int)lengthType != data.Length)
             throw new ArgumentException();
         return new RawMessage(status, data.byteArray, data.firstTwoBytes);
     }
 
     public static RawMessage Create(StatusByte status, ReadOnlySpan<byte> data)
     {
-        return Create(status, new MessageData(data));
+        return Create(status, new ShortPayload(data));
     }
 
     public static RawMessage Create(ChannelMessageType type, Channel channel, byte data)
@@ -151,22 +150,22 @@ public readonly struct RawMessage
 
     public static RawMessage Create(StatusByte status)
     {
-        if (status.GetDataLengthType() != MessageDataLengthType.ZeroBytes) throw new ArgumentOutOfRangeException();
+        if (status.GetPayloadLengthType() != ShortPayloadLengthType.ZeroBytes) throw new ArgumentOutOfRangeException();
         return new RawMessage(status);
     }
 
     public static RawMessage Create(StatusByte status, byte data)
     {
-        if (status.GetDataLengthType() != MessageDataLengthType.OneByte) throw new ArgumentOutOfRangeException();
-        if (!IsValidDataByte(data)) throw new ArgumentOutOfRangeException();
+        if (status.GetPayloadLengthType() != ShortPayloadLengthType.OneByte) throw new ArgumentOutOfRangeException();
+        if (!IsValidPayloadByte(data)) throw new ArgumentOutOfRangeException();
         return new RawMessage(status, data);
     }
 
     public static RawMessage Create(StatusByte status, byte firstDataByte, byte secondDataByte)
     {
-        if (status.GetDataLengthType() != MessageDataLengthType.TwoBytes)
+        if (status.GetPayloadLengthType() != ShortPayloadLengthType.TwoBytes)
             throw new ArgumentOutOfRangeException();
-        if (!AreValidDataBytes(firstDataByte, secondDataByte))
+        if (!AreValidPayloadBytes(firstDataByte, secondDataByte))
             throw new ArgumentOutOfRangeException();
         return new RawMessage(status, (ushort)((uint)firstDataByte | ((uint)secondDataByte << 8)));
     }
@@ -174,9 +173,9 @@ public readonly struct RawMessage
     public static RawMessage Create(StatusByte status, ImmutableArray<byte> data)
     {
         if (data.IsDefault) throw new ArgumentException();
-        if ((status.GetDataLength() ?? data.Length) != data.Length)
+        if ((status.GetPayloadLength() ?? data.Length) != data.Length)
             throw new ArgumentOutOfRangeException();
-        if (!AreValidDataBytes(data)) throw new ArgumentException();
+        if (!AreValidPayloadBytes(data)) throw new ArgumentException();
         return new RawMessage(status, data);
     }
 
@@ -188,7 +187,7 @@ public readonly struct RawMessage
 
     public static RawMessage CreateSysEx(ImmutableArray<byte> data)
     {
-        if (!AreValidDataBytes(data)) throw new ArgumentException();
+        if (!AreValidPayloadBytes(data)) throw new ArgumentException();
         return new RawMessage(StatusByte.SystemExclusive, data);
     }
     #endregion

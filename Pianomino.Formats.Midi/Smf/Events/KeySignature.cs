@@ -3,15 +3,17 @@ using System;
 using System.Collections.Immutable;
 using System.Text;
 
-namespace Pianomino.Formats.Midi.Smf.Messages;
+namespace Pianomino.Formats.Midi.Smf.Events;
 
-public sealed class KeySignature : MetaMessage
+public sealed class KeySignature : MetaEvent
 {
-    public const int DataLength = 2;
+    public const int PayloadLength = 2;
 
     public DiatonicKey DiatonicKey { get; }
 
     public KeySignature(DiatonicKey key) => this.DiatonicKey = key;
+
+    public override MetaEventTypeByte MetaType => MetaEventTypeByte.KeySignature;
 
     public int SharpCount => DiatonicKey.SharpsInSignature;
     public MajorOrMinor MajorOrMinor => DiatonicKey.MajorOrMinor;
@@ -25,10 +27,8 @@ public sealed class KeySignature : MetaMessage
         > 0 => DiatonicKey.SharpsInSignature + "#"
     };
 
-    protected override MetaMessageTypeByte GetMetaEventType() => MetaMessageTypeByte.KeySignature;
-
-    public override RawSmfMessage ToRaw(Encoding encoding)
-        => RawSmfMessage.CreateMeta(MetaMessageTypeByte.KeySignature,
+    public override RawEvent ToRaw(Encoding encoding)
+        => RawEvent.CreateMeta(MetaEventTypeByte.KeySignature,
             ImmutableArray.Create((byte)(sbyte)SharpCount, IsMajor ? (byte)0 : (byte)1));
 
     public override string ToString() => $"KeySignature({SharpsString}, {(IsMinor ? "Minor" : "Major")})";

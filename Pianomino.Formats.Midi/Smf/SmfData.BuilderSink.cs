@@ -11,7 +11,7 @@ partial record SmfData
 {
     public sealed class BuilderSink : ISmfSink
     {
-        private readonly ImmutableArray<Event>.Builder eventArrayBuilder = ImmutableArray.CreateBuilder<Event>();
+        private readonly ImmutableArray<TrackEvent>.Builder eventArrayBuilder = ImmutableArray.CreateBuilder<TrackEvent>();
         private readonly ImmutableArray<Track>.Builder trackArrayBuilder = ImmutableArray.CreateBuilder<Track>();
         private SmfTrackFormat? trackFormat; // Null = either Single or Simultaneous
         private SmfData? result;
@@ -56,32 +56,29 @@ partial record SmfData
             ticks = 0;
         }
 
-        public void AddEvent(uint timeDelta, in RawSmfMessage message)
+        public void AddEvent(uint timeDelta, in RawEvent message)
         {
             if (State != SmfSinkState.InTrack) throw new InvalidOperationException();
 
             ticks += timeDelta;
-            if (message.IsMeta && message.GetMetaType() == MetaMessageTypeByte.EndOfTrack)
+            if (message.IsMeta && message.GetMetaType() == MetaEventTypeByte.EndOfTrack)
             {
                 State = SmfSinkState.AtEndOfTrackEvent;
             }
             else
             {
-                eventArrayBuilder.Add(new Event { TimeInTicks = ticks, Message = message });
+                eventArrayBuilder.Add(new TrackEvent { TimeInTicks = ticks, Event = message });
             }
         }
 
         public void AddChannelEvent(uint timeDelta, StatusByte status, byte firstDataByte, byte secondDataByte = 0)
-            => AddEvent(timeDelta, RawSmfMessage.CreateChannel(status, firstDataByte, secondDataByte));
+            => AddEvent(timeDelta, RawEvent.CreateChannel(status, firstDataByte, secondDataByte));
 
-        public void AddSysExEvent(uint timeDelta, bool continuation, ReadOnlySpan<byte> data, bool terminated)
-            => AddEvent(timeDelta, RawSmfMessage.CreateSystemExclusive(data.ToImmutableArray(), first: !continuation, last: terminated));
+        public void AddEscapeEvent(uint timeDelta, bool sysExPrefix, ReadOnlySpan<byte> data)
+            => AddEvent(timeDelta, RawEvent.CreateEscape(sysExPrefix, data.ToImmutableArray()));
 
-        public void AddEscapeEvent(uint timeDelta, ReadOnlySpan<byte> data)
-            => AddEvent(timeDelta, RawSmfMessage.CreateEscape(data.ToImmutableArray()));
-
-        public void AddMetaEvent(uint timeDelta, MetaMessageTypeByte type, ReadOnlySpan<byte> data)
-            => AddEvent(timeDelta, RawSmfMessage.CreateMeta(type, data.ToImmutableArray()));
+        public void AddMetaEvent(uint timeDelta, MetaEventTypeByte type, ReadOnlySpan<byte> data)
+            => AddEvent(timeDelta, RawEvent.CreateMeta(type, data.ToImmutableArray()));
 
         public void EndTrack()
         {

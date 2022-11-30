@@ -15,7 +15,7 @@ public sealed class ControlChange : ChannelMessage
         : base(channel)
     {
         if (!controller.IsValid()) throw new ArgumentOutOfRangeException(nameof(controller));
-        if (!RawMessage.IsValidDataByte(value)) throw new ArgumentOutOfRangeException(nameof(value));
+        if (!RawMessage.IsValidPayloadByte(value)) throw new ArgumentOutOfRangeException(nameof(value));
         this.Controller = controller;
         this.Value = value;
     }

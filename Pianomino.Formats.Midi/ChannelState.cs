@@ -29,13 +29,13 @@ public sealed class ChannelState
     public void Update(RawMessage message, Channel? channelFilter)
     {
         if (!message.AsChannelMessage(out var type, out var channel) || channel != (channelFilter ?? channel)) return;
-        Update(type, message.Data.FirstByteOrZero, message.Data.SecondByteOrZero);
+        Update(type, message.Payload.FirstByteOrZero, message.Payload.SecondByteOrZero);
     }
 
     public void Update(ChannelMessageType type, byte firstByte, byte secondByte)
     {
-        if (!RawMessage.IsValidDataByte(firstByte)) throw new ArgumentOutOfRangeException(nameof(firstByte));
-        if (!RawMessage.IsValidDataByte(secondByte)) throw new ArgumentOutOfRangeException(nameof(secondByte));
+        if (!RawMessage.IsValidPayloadByte(firstByte)) throw new ArgumentOutOfRangeException(nameof(firstByte));
+        if (!RawMessage.IsValidPayloadByte(secondByte)) throw new ArgumentOutOfRangeException(nameof(secondByte));
 
         if (type.AsNoteMessage() is NoteMessageType noteType)
         {

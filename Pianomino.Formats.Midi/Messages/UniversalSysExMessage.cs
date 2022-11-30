@@ -12,7 +12,7 @@ public abstract class UniversalSysExMessage : SysExMessage
 
     protected UniversalSysExMessage(byte deviceId)
     {
-        if (!RawMessage.IsValidDataByte(deviceId))
+        if (!RawMessage.IsValidPayloadByte(deviceId))
             throw new ArgumentOutOfRangeException(nameof(deviceId));
         this.DeviceId = deviceId;
     }

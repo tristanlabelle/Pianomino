@@ -70,7 +70,7 @@ public sealed class SmfWriter : ISmfSink, IDisposable
     {
         if (State == SmfSinkState.InTrack)
         {
-            WriteMeta(0, MetaMessageTypeByte.EndOfTrack, data: ReadOnlySpan<byte>.Empty);
+            WriteMeta(0, MetaEventTypeByte.EndOfTrack, data: ReadOnlySpan<byte>.Empty);
             State = SmfSinkState.AtEndOfTrackEvent;
         }
 
@@ -101,8 +101,8 @@ public sealed class SmfWriter : ISmfSink, IDisposable
     {
         if (State != SmfSinkState.InTrack) throw new InvalidOperationException();
         if (!status.IsChannelMessage()) throw new ArgumentOutOfRangeException(nameof(status));
-        if (!RawMessage.IsValidDataByte(firstDataByte)) throw new ArgumentOutOfRangeException(nameof(firstDataByte));
-        if (!RawMessage.IsValidDataByte(secondDataByte)) throw new ArgumentOutOfRangeException(nameof(firstDataByte));
+        if (!RawMessage.IsValidPayloadByte(firstDataByte)) throw new ArgumentOutOfRangeException(nameof(firstDataByte));
+        if (!RawMessage.IsValidPayloadByte(secondDataByte)) throw new ArgumentOutOfRangeException(nameof(firstDataByte));
 
         binaryWriter.Write7BitEncodedInt(checked((int)timeDelta));
         if (runningStatus.Current != status)
@@ -112,46 +112,44 @@ public sealed class SmfWriter : ISmfSink, IDisposable
         }
 
         binaryWriter.Write(firstDataByte);
-        if (status.GetDataLengthType() == MessageDataLengthType.TwoBytes)
+        if (status.GetPayloadLengthType() == ShortPayloadLengthType.TwoBytes)
             binaryWriter.Write(secondDataByte);
     }
 
-    public void WriteSysEx(uint timeDelta, bool continuation, ReadOnlySpan<byte> data, bool terminated)
+    public void WriteEscape(uint timeDelta, bool sysExPrefix, ReadOnlySpan<byte> data)
     {
-        throw new NotImplementedException();
+        if (State != SmfSinkState.InTrack) throw new InvalidOperationException();
+        binaryWriter.Write7BitEncodedInt(checked((int)timeDelta));
+        binaryWriter.Write(sysExPrefix ? (byte)EventHeaderByte.Escape_SysEx : (byte)EventHeaderByte.Escape);
+        binaryWriter.Write(data);
     }
 
-    public void WriteEscape(uint timeDelta, ReadOnlySpan<byte> data)
-    {
-        throw new NotImplementedException();
-    }
-
-    public void WriteMeta(uint timeDelta, MetaMessageTypeByte type, ReadOnlySpan<byte> data)
+    public void WriteMeta(uint timeDelta, MetaEventTypeByte type, ReadOnlySpan<byte> data)
     {
         if (State != SmfSinkState.InTrack) throw new InvalidOperationException();
 
         binaryWriter.Write7BitEncodedInt(checked((int)timeDelta));
-        binaryWriter.Write(RawSmfMessage.Status_Meta);
+        binaryWriter.Write((byte)EventHeaderByte.Meta);
         binaryWriter.Write((byte)type);
-        binaryWriter.Write7BitEncodedInt(checked((int)data.Length));
+        binaryWriter.Write7BitEncodedInt(data.Length);
         binaryWriter.Write(data);
 
         runningStatus.Reset();
 
-        if (type == MetaMessageTypeByte.EndOfTrack)
+        if (type == MetaEventTypeByte.EndOfTrack)
             State = SmfSinkState.AtEndOfTrackEvent;
     }
 
-    public void Write(uint timeDelta, in RawSmfMessage message)
+    public void Write(uint timeDelta, in RawEvent message)
     {
         if (message.IsChannel)
         {
-            var wireMessage = message.ToWireMessage();
-            WriteChannel(timeDelta, wireMessage.Status, wireMessage.Data[0], wireMessage.Data.Length == 2 ? wireMessage.Data[1] : (byte)0);
+            var wireMessage = message.ToMessage();
+            WriteChannel(timeDelta, wireMessage.Status, wireMessage.Payload[0], wireMessage.Payload.Length == 2 ? wireMessage.Payload[1] : (byte)0);
         }
         else if (message.IsMeta)
         {
-            WriteMeta(timeDelta, message.GetMetaType(), message.DataArray.AsSpan());
+            WriteMeta(timeDelta, message.GetMetaType(), message.Payload.AsSpan());
         }
         else
         {
@@ -188,18 +186,15 @@ public sealed class SmfWriter : ISmfSink, IDisposable
         binaryWriter.WriteBigEndian(chunkHeader.Length);
     }
 
-    void ISmfSink.AddEvent(uint timeDelta, in RawSmfMessage message)
+    void ISmfSink.AddEvent(uint timeDelta, in RawEvent message)
         => Write(timeDelta, in message);
 
     void ISmfSink.AddChannelEvent(uint timeDelta, StatusByte status, byte firstDataByte, byte secondDataByte)
         => WriteChannel(timeDelta, status, firstDataByte, secondDataByte);
 
-    void ISmfSink.AddSysExEvent(uint timeDelta, bool continuation, ReadOnlySpan<byte> data, bool terminated)
-        => WriteSysEx(timeDelta, continuation, data, terminated);
+    void ISmfSink.AddEscapeEvent(uint timeDelta, bool sysExPrefix, ReadOnlySpan<byte> data)
+        => WriteEscape(timeDelta, sysExPrefix, data);
 
-    void ISmfSink.AddEscapeEvent(uint timeDelta, ReadOnlySpan<byte> data)
-        => WriteEscape(timeDelta, data);
-
-    void ISmfSink.AddMetaEvent(uint timeDelta, MetaMessageTypeByte type, ReadOnlySpan<byte> data)
+    void ISmfSink.AddMetaEvent(uint timeDelta, MetaEventTypeByte type, ReadOnlySpan<byte> data)
         => WriteMeta(timeDelta, type, data);
 }

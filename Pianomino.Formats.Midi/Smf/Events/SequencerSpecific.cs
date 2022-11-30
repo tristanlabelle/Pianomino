@@ -1,13 +1,10 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Collections.Immutable;
-using System.Linq;
 using System.Text;
-using System.Threading.Tasks;
 
-namespace Pianomino.Formats.Midi.Smf.Messages;
+namespace Pianomino.Formats.Midi.Smf.Events;
 
-public sealed class SequencerSpecific : MetaMessage
+public sealed class SequencerSpecific : MetaEvent
 {
     public ImmutableArray<byte> Data { get; }
 
@@ -17,11 +14,10 @@ public sealed class SequencerSpecific : MetaMessage
         this.Data = data;
     }
 
+    public override MetaEventTypeByte MetaType => MetaEventTypeByte.SequencerSpecific;
     public ManufacturerId? ManufacturerId => Midi.ManufacturerId.TryFromData(Data.AsSpan());
 
-    public override RawSmfMessage ToRaw(Encoding encoding) => throw new NotImplementedException();
-
-    protected override MetaMessageTypeByte GetMetaEventType() => MetaMessageTypeByte.SequencerSpecific;
+    public override RawEvent ToRaw(Encoding encoding) => throw new NotImplementedException();
 
     public override string ToString()
     {

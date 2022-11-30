@@ -8,9 +8,9 @@ public sealed class SmfTrackMerger : ISmfSink
     public readonly struct Event
     {
         public long Ticks { get; }
-        public RawSmfMessage Message { get; }
+        public RawEvent Message { get; }
 
-        public Event(long ticks, in RawSmfMessage message)
+        public Event(long ticks, in RawEvent message)
         {
             this.Ticks = ticks;
             this.Message = message;
@@ -68,33 +68,26 @@ public sealed class SmfTrackMerger : ISmfSink
         ticks = 0;
     }
 
-    public void AddEvent(uint timeDelta, in RawSmfMessage message)
+    public void AddEvent(uint timeDelta, in RawEvent message)
     {
         if (state != SmfSinkState.InTrack) throw new InvalidOperationException();
 
         ticks += timeDelta;
 
-        if (message.IsMeta && message.GetMetaType() == MetaMessageTypeByte.EndOfTrack)
-        {
+        if (message.IsMeta && message.GetMetaType() == MetaEventTypeByte.EndOfTrack)
             state = SmfSinkState.AtEndOfTrackEvent;
-        }
         else
-        {
             events.Add(new Key(ticks, events.Count), new Event(ticks, in message));
-        }
     }
 
     public void AddChannelEvent(uint timeDelta, StatusByte status, byte firstDataByte, byte secondDataByte = 0)
-        => AddEvent(timeDelta, RawSmfMessage.CreateChannel(status, firstDataByte, secondDataByte));
+        => AddEvent(timeDelta, RawEvent.CreateChannel(status, firstDataByte, secondDataByte));
 
-    public void AddSysExEvent(uint timeDelta, bool continuation, ReadOnlySpan<byte> data, bool terminated)
-        => AddEvent(timeDelta, RawSmfMessage.CreateSystemExclusive(data.ToImmutableArray(), first: !continuation, last: terminated));
+    public void AddEscapeEvent(uint timeDelta, bool sysExPrefix, ReadOnlySpan<byte> data)
+        => AddEvent(timeDelta, RawEvent.CreateEscape(sysExPrefix, data.ToImmutableArray()));
 
-    public void AddEscapeEvent(uint timeDelta, ReadOnlySpan<byte> data)
-        => AddEvent(timeDelta, RawSmfMessage.CreateEscape(data.ToImmutableArray()));
-
-    public void AddMetaEvent(uint timeDelta, MetaMessageTypeByte type, ReadOnlySpan<byte> data)
-        => AddEvent(timeDelta, RawSmfMessage.CreateMeta(type, data.ToImmutableArray()));
+    public void AddMetaEvent(uint timeDelta, MetaEventTypeByte type, ReadOnlySpan<byte> data)
+        => AddEvent(timeDelta, RawEvent.CreateMeta(type, data.ToImmutableArray()));
 
     public void EndTrack()
     {

@@ -1,10 +1,6 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.Diagnostics;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace Pianomino.Formats.Midi;
 
@@ -13,29 +9,29 @@ namespace Pianomino.Formats.Midi;
 /// Outwardly immutable.
 /// </summary>
 [DebuggerDisplay("{GetDebuggerDisplayString()}")]
-public struct MessageData
+public struct ShortPayload
 {
-    public static readonly MessageData Empty;
+    public static readonly ShortPayload Empty;
 
     internal ImmutableArray<byte> byteArray; // May be default if lengthType != Variable
-    private readonly MessageDataLengthType lengthType; // Defaults to ZeroBytes
+    private readonly ShortPayloadLengthType lengthType; // Defaults to ZeroBytes
     internal readonly ushort firstTwoBytes; // Least significant: first byte, most significant: second byte (redundant if byteArray not null)
 
-    public MessageData(byte firstByte)
+    public ShortPayload(byte singleByte)
     {
         byteArray = default;
-        lengthType = MessageDataLengthType.OneByte;
-        firstTwoBytes = firstByte;
+        lengthType = ShortPayloadLengthType.OneByte;
+        firstTwoBytes = singleByte;
     }
 
-    public MessageData(byte firstByte, byte secondByte)
+    public ShortPayload(byte firstByte, byte secondByte)
     {
         byteArray = default;
-        lengthType = MessageDataLengthType.TwoBytes;
+        lengthType = ShortPayloadLengthType.TwoBytes;
         firstTwoBytes = (ushort)(((uint)secondByte << 8) | (uint)firstByte);
     }
 
-    public MessageData(ImmutableArray<byte> data)
+    public ShortPayload(ImmutableArray<byte> data)
     {
         if (data.IsDefault) throw new ArgumentException();
 
@@ -44,51 +40,51 @@ public struct MessageData
         switch (data.Length)
         {
             case 0:
-                lengthType = MessageDataLengthType.ZeroBytes;
+                lengthType = ShortPayloadLengthType.ZeroBytes;
                 firstTwoBytes = 0;
                 break;
 
             case 1:
-                lengthType = MessageDataLengthType.OneByte;
+                lengthType = ShortPayloadLengthType.OneByte;
                 firstTwoBytes = data[0];
                 break;
 
             case 2:
-                lengthType = MessageDataLengthType.TwoBytes;
+                lengthType = ShortPayloadLengthType.TwoBytes;
                 firstTwoBytes = (ushort)(((uint)data[1] << 8) | (uint)data[0]);
                 break;
 
             default:
-                lengthType = MessageDataLengthType.Variable;
+                lengthType = ShortPayloadLengthType.Variable;
                 firstTwoBytes = (ushort)(((uint)data[1] << 8) | (uint)data[0]);
                 break;
         }
     }
 
-    public MessageData(ReadOnlySpan<byte> data)
+    public ShortPayload(ReadOnlySpan<byte> data)
     {
         switch (data.Length)
         {
             case 0:
-                lengthType = MessageDataLengthType.ZeroBytes;
+                lengthType = ShortPayloadLengthType.ZeroBytes;
                 byteArray = default;
                 firstTwoBytes = 0;
                 break;
 
             case 1:
-                lengthType = MessageDataLengthType.OneByte;
+                lengthType = ShortPayloadLengthType.OneByte;
                 byteArray = default;
                 firstTwoBytes = data[0];
                 break;
 
             case 2:
-                lengthType = MessageDataLengthType.TwoBytes;
+                lengthType = ShortPayloadLengthType.TwoBytes;
                 byteArray = default;
                 firstTwoBytes = (ushort)(((uint)data[1] << 8) | (uint)data[0]);
                 break;
 
             default:
-                lengthType = MessageDataLengthType.Variable;
+                lengthType = ShortPayloadLengthType.Variable;
                 var builder = ImmutableArray.CreateBuilder<byte>(initialCapacity: data.Length);
                 for (int i = 0; i < data.Length; ++i)
                     builder.Add(data[i]);
@@ -98,14 +94,14 @@ public struct MessageData
         }
     }
 
-    internal MessageData(MessageDataLengthType lengthType, ushort firstTwoBytes, ImmutableArray<byte> data)
+    internal ShortPayload(ShortPayloadLengthType lengthType, ushort firstTwoBytes, ImmutableArray<byte> data)
     {
         this.byteArray = data;
         this.lengthType = lengthType;
         this.firstTwoBytes = firstTwoBytes;
     }
 
-    public int Length => lengthType == MessageDataLengthType.Variable ? byteArray.Length : (int)lengthType;
+    public int Length => lengthType == ShortPayloadLengthType.Variable ? byteArray.Length : (int)lengthType;
     public byte FirstByteOrZero => (byte)firstTwoBytes;
     public byte SecondByteOrZero => (byte)(firstTwoBytes >> 8);
 
@@ -127,9 +123,9 @@ public struct MessageData
         {
             byteArray = lengthType switch
             {
-                MessageDataLengthType.ZeroBytes => ImmutableArray<byte>.Empty,
-                MessageDataLengthType.OneByte => ImmutableArray.Create((byte)firstTwoBytes),
-                MessageDataLengthType.TwoBytes => ImmutableArray.Create((byte)(firstTwoBytes >> 8)),
+                ShortPayloadLengthType.ZeroBytes => ImmutableArray<byte>.Empty,
+                ShortPayloadLengthType.OneByte => ImmutableArray.Create((byte)firstTwoBytes),
+                ShortPayloadLengthType.TwoBytes => ImmutableArray.Create((byte)(firstTwoBytes >> 8)),
                 _ => throw new Exception() // Unreachable
             };
         }
@@ -164,7 +160,9 @@ public struct MessageData
         };
     }
 
-    public static implicit operator MessageData(ImmutableArray<byte> data) => new(data);
+    public static implicit operator ShortPayload(ImmutableArray<byte> data) => new(data);
+
+    public static implicit operator ImmutableArray<byte>(ShortPayload payload) => payload.ToImmutableArray();
 
     internal static ushort PackFirstTwoBytes(byte first, byte second)
         => (ushort)((ushort)first | ((ushort)second << 8));

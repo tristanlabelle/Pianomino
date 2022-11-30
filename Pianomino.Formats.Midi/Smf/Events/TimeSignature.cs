@@ -1,16 +1,13 @@
 ﻿using Pianomino.Theory;
 using System;
-using System.Collections.Generic;
 using System.Collections.Immutable;
-using System.Linq;
 using System.Text;
-using System.Threading.Tasks;
 
-namespace Pianomino.Formats.Midi.Smf.Messages;
+namespace Pianomino.Formats.Midi.Smf.Events;
 
-public sealed class TimeSignature : MetaMessage
+public sealed class TimeSignature : MetaEvent
 {
-    public const int DataLength = 4;
+    public const int PayloadLength = 4;
 
     private readonly byte numerator;
     private readonly byte denominatorLog2;
@@ -33,21 +30,20 @@ public sealed class TimeSignature : MetaMessage
         this.thirtySecondNotesPerMidiQuarterNote = checked((byte)thirtySecondNotesPerMidiQuarterNote);
     }
 
+    public override MetaEventTypeByte MetaType => MetaEventTypeByte.TimeSignature;
     public StandardMeter Meter => new(numerator, NoteUnit.FromTimeSignatureDenominator(1 << denominatorLog2));
     public int ClocksPerMetronomeTick => clocksPerMetronomeTick;
     public int ThirtySecondNotesPerMidiQuarterNote => thirtySecondNotesPerMidiQuarterNote;
 
-    public override RawSmfMessage ToRaw(Encoding encoding)
-        => RawSmfMessage.CreateMeta(MetaMessageTypeByte.TimeSignature,
+    public override RawEvent ToRaw(Encoding encoding)
+        => RawEvent.CreateMeta(MetaEventTypeByte.TimeSignature,
             ImmutableArray.Create(numerator, denominatorLog2, clocksPerMetronomeTick, thirtySecondNotesPerMidiQuarterNote));
 
     public override string ToString() => $"TimeSignature({Meter})";
 
-    protected override MetaMessageTypeByte GetMetaEventType() => MetaMessageTypeByte.TimeSignature;
-
     public static TimeSignature FromBytes(ReadOnlySpan<byte> data)
     {
-        if (data.Length != DataLength) throw new ArgumentException();
+        if (data.Length != PayloadLength) throw new ArgumentException();
         return FromBytes(data[0], data[1], data[2], data[3]);
     }
 

@@ -20,7 +20,7 @@ public sealed class Handshake : UniversalSysExMessage
             && kind != UniversalSysExKind.Handshaking_Wait
             && kind != UniversalSysExKind.Handshaking_EndOfFile)
             throw new ArgumentOutOfRangeException(nameof(kind));
-        if (!RawMessage.IsValidDataByte(packetNumber))
+        if (!RawMessage.IsValidPayloadByte(packetNumber))
             throw new ArgumentOutOfRangeException(nameof(packetNumber));
 
         this.Kind = kind;
