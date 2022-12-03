@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace Pianomino.Formats.Midi.Smf;
 
-public enum SmfValidationError
+public enum FileValidationError
 {
     InvalidMThdFormat,
     InvalidMThdTimeDivision,
@@ -20,4 +20,4 @@ public enum SmfValidationError
     InvalidTrackTermination
 }
 
-public delegate void SmfValidationErrorHandler(SmfValidationError error);
+public delegate void FileValidationErrorHandler(FileValidationError error);

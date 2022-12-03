@@ -4,7 +4,7 @@ using System.Text;
 
 namespace Pianomino.Formats.Midi.Smf.Events;
 
-public sealed class SysExEvent : SmfEvent
+public sealed class SysExEvent : Event
 {
     public SysExMessage Message { get; }
 

@@ -7,23 +7,23 @@ using System.Threading.Tasks;
 
 namespace Pianomino.Formats.Midi.Smf;
 
-partial record SmfData
+partial record FileModel
 {
-    public sealed class BuilderSink : ISmfSink
+    public sealed class BuilderSink : IFileSink
     {
         private readonly ImmutableArray<TrackEvent>.Builder eventArrayBuilder = ImmutableArray.CreateBuilder<TrackEvent>();
         private readonly ImmutableArray<Track>.Builder trackArrayBuilder = ImmutableArray.CreateBuilder<Track>();
-        private SmfTrackFormat? trackFormat; // Null = either Single or Simultaneous
-        private SmfData? result;
+        private TrackFormat? trackFormat; // Null = either Single or Simultaneous
+        private FileModel? result;
         private long ticks;
-        public SmfSinkState State { get; private set; }
+        public FileSinkState State { get; private set; }
 
         public BuilderSink() { }
 
         public BuilderSink(TimeDivision timeDivision, bool areTracksIndependent = false)
         {
             // Will be overriden in Dispose
-            result = new SmfData
+            result = new FileModel
             {
                 TimeDivision = timeDivision,
                 AreTracksIndependent = areTracksIndependent
@@ -31,39 +31,39 @@ partial record SmfData
         }
 
         public void Begin(TimeDivision timeDivision, bool areTracksIndependent = false)
-            => Begin(areTracksIndependent ? SmfTrackFormat.Independent : null, timeDivision);
+            => Begin(areTracksIndependent ? TrackFormat.Independent : null, timeDivision);
 
-        public void Begin(SmfTrackFormat trackFormat, TimeDivision timeDivision)
-            => Begin((SmfTrackFormat?)trackFormat, timeDivision);
+        public void Begin(TrackFormat trackFormat, TimeDivision timeDivision)
+            => Begin((TrackFormat?)trackFormat, timeDivision);
 
-        private void Begin(SmfTrackFormat? trackFormat, TimeDivision timeDivision)
+        private void Begin(TrackFormat? trackFormat, TimeDivision timeDivision)
         {
-            if (State != SmfSinkState.Initial) throw new InvalidOperationException();
+            if (State != FileSinkState.Initial) throw new InvalidOperationException();
 
             this.trackFormat = trackFormat;
-            result = new SmfData { TimeDivision = timeDivision };
+            result = new FileModel { TimeDivision = timeDivision };
 
-            State = SmfSinkState.BetweenTracks;
+            State = FileSinkState.BetweenTracks;
         }
 
         public void BeginTrack()
         {
-            if (State != SmfSinkState.BetweenTracks) throw new InvalidOperationException();
-            if (trackArrayBuilder.Count == 1 && trackFormat == SmfTrackFormat.Single)
+            if (State != FileSinkState.BetweenTracks) throw new InvalidOperationException();
+            if (trackArrayBuilder.Count == 1 && trackFormat == TrackFormat.Single)
                 throw new InvalidOperationException();
 
-            State = SmfSinkState.InTrack;
+            State = FileSinkState.InTrack;
             ticks = 0;
         }
 
         public void AddEvent(uint timeDelta, in RawEvent message)
         {
-            if (State != SmfSinkState.InTrack) throw new InvalidOperationException();
+            if (State != FileSinkState.InTrack) throw new InvalidOperationException();
 
             ticks += timeDelta;
             if (message.IsMeta && message.GetMetaType() == MetaEventTypeByte.EndOfTrack)
             {
-                State = SmfSinkState.AtEndOfTrackEvent;
+                State = FileSinkState.AtEndOfTrackEvent;
             }
             else
             {
@@ -82,23 +82,23 @@ partial record SmfData
 
         public void EndTrack()
         {
-            if (State is not SmfSinkState.AtEndOfTrackEvent and not SmfSinkState.InTrack)
+            if (State is not FileSinkState.AtEndOfTrackEvent and not FileSinkState.InTrack)
                 throw new InvalidOperationException();
             trackArrayBuilder.Add(new Track { Events = eventArrayBuilder.ToImmutable() });
             eventArrayBuilder.Clear();
-            State = SmfSinkState.BetweenTracks;
+            State = FileSinkState.BetweenTracks;
         }
 
         public void End()
         {
-            if (State == SmfSinkState.Ended) return;
-            if (State != SmfSinkState.BetweenTracks) EndTrack();
-            State = SmfSinkState.Ended;
+            if (State == FileSinkState.Ended) return;
+            if (State != FileSinkState.BetweenTracks) EndTrack();
+            State = FileSinkState.Ended;
 
             trackArrayBuilder.Capacity = trackArrayBuilder.Count;
-            result = new SmfData
+            result = new FileModel
             {
-                AreTracksIndependent = trackFormat == SmfTrackFormat.Independent,
+                AreTracksIndependent = trackFormat == TrackFormat.Independent,
                 TimeDivision = result!.TimeDivision,
                 Tracks = trackArrayBuilder.MoveToImmutable()
             };
@@ -106,7 +106,7 @@ partial record SmfData
             trackArrayBuilder.Clear();
         }
 
-        public SmfData Build()
+        public FileModel Build()
         {
             End();
             return result ?? throw new UnreachableException();

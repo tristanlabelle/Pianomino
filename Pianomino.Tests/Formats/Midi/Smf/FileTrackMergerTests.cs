@@ -7,16 +7,16 @@ using Xunit;
 
 namespace Pianomino.Formats.Midi.Smf;
 
-public static class SmfTrackMergerTests
+public static class FileTrackMergerTests
 {
     [Fact]
     public static void TestMergeTracks()
     {
-        var dataBuilder = new SmfData.BuilderSink();
+        var dataBuilder = new FileModel.BuilderSink();
 
         {
-            var sink = (ISmfSink)new SmfTrackMerger(dataBuilder);
-            sink.Begin(SmfTrackFormat.Simultaneous, TimeDivision.OneTickPerQuarterNote);
+            var sink = (IFileSink)new TrackMerger(dataBuilder);
+            sink.Begin(TrackFormat.Simultaneous, TimeDivision.OneTickPerQuarterNote);
 
             sink.BeginTrack();
             sink.AddEvent(0, new Events.TextEvent(MetaEventTypeByte.TrackName, "Hello").ToRaw());
@@ -48,12 +48,12 @@ public static class SmfTrackMergerTests
         AssertTicksAndHeaderByte(track.Events[5], 3, StatusByte.NoteOff_Channel2);
     }
 
-    private static void AssertTicksAndHeaderByte(SmfData.TrackEvent @event, long ticks, EventHeaderByte headerByte)
+    private static void AssertTicksAndHeaderByte(FileModel.TrackEvent @event, long ticks, EventHeaderByte headerByte)
     {
         Assert.Equal(ticks, @event.TimeInTicks);
         Assert.Equal(headerByte, @event.Event.HeaderByte);
     }
 
-    private static void AssertTicksAndHeaderByte(SmfData.TrackEvent @event, long ticks, StatusByte headerByte)
+    private static void AssertTicksAndHeaderByte(FileModel.TrackEvent @event, long ticks, StatusByte headerByte)
         => AssertTicksAndHeaderByte(@event, ticks, (EventHeaderByte)(byte)headerByte);
 }

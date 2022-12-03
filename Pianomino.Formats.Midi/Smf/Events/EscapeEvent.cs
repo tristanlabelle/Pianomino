@@ -5,7 +5,7 @@ using System.Text;
 
 namespace Pianomino.Formats.Midi.Smf.Events;
 
-public sealed class EscapeEvent : SmfEvent
+public sealed class EscapeEvent : Event
 {
     public bool HasSysExPrefix { get; }
     public ImmutableArray<byte> Payload { get; }

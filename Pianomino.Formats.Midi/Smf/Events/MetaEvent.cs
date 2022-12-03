@@ -5,7 +5,7 @@ using System.Text;
 
 namespace Pianomino.Formats.Midi.Smf.Events;
 
-public abstract class MetaEvent : SmfEvent
+public abstract class MetaEvent : Event
 {
     public override EventHeaderByte HeaderByte => EventHeaderByte.Meta;
     public abstract MetaEventTypeByte MetaType { get; }

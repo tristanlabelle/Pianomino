@@ -3,7 +3,7 @@ using System.Collections.Generic;
 
 namespace Pianomino.Formats.Midi.Smf;
 
-public sealed class SmfTrackMerger : ISmfSink
+public sealed class TrackMerger : IFileSink
 {
     public readonly struct Event
     {
@@ -33,17 +33,17 @@ public sealed class SmfTrackMerger : ISmfSink
     }
 
     public TimeDivision? TimeDivision { get; private set; }
-    private readonly ISmfSink? flushSink;
+    private readonly IFileSink? flushSink;
     private readonly SortedDictionary<Key, Event> events = new();
     private long ticks;
-    private SmfSinkState state;
+    private FileSinkState state;
 
-    public SmfTrackMerger(ISmfSink? flushSink = null)
+    public TrackMerger(IFileSink? flushSink = null)
     {
         this.flushSink = flushSink;
     }
 
-    public SmfTrackMerger(TimeDivision timeDivision, ISmfSink? flushSink = null)
+    public TrackMerger(TimeDivision timeDivision, IFileSink? flushSink = null)
         : this(flushSink)
     {
         this.TimeDivision = timeDivision;
@@ -54,28 +54,28 @@ public sealed class SmfTrackMerger : ISmfSink
 
     public void Begin(TimeDivision timeDivision)
     {
-        if (state != SmfSinkState.Initial) throw new InvalidOperationException();
+        if (state != FileSinkState.Initial) throw new InvalidOperationException();
 
         TimeDivision = timeDivision;
-        state = SmfSinkState.BetweenTracks;
+        state = FileSinkState.BetweenTracks;
     }
 
     public void BeginTrack()
     {
-        if (state != SmfSinkState.BetweenTracks) throw new InvalidOperationException();
+        if (state != FileSinkState.BetweenTracks) throw new InvalidOperationException();
 
-        state = SmfSinkState.InTrack;
+        state = FileSinkState.InTrack;
         ticks = 0;
     }
 
     public void AddEvent(uint timeDelta, in RawEvent message)
     {
-        if (state != SmfSinkState.InTrack) throw new InvalidOperationException();
+        if (state != FileSinkState.InTrack) throw new InvalidOperationException();
 
         ticks += timeDelta;
 
         if (message.IsMeta && message.GetMetaType() == MetaEventTypeByte.EndOfTrack)
-            state = SmfSinkState.AtEndOfTrackEvent;
+            state = FileSinkState.AtEndOfTrackEvent;
         else
             events.Add(new Key(ticks, events.Count), new Event(ticks, in message));
     }
@@ -91,34 +91,34 @@ public sealed class SmfTrackMerger : ISmfSink
 
     public void EndTrack()
     {
-        if (state is not SmfSinkState.InTrack and not SmfSinkState.AtEndOfTrackEvent)
+        if (state is not FileSinkState.InTrack and not FileSinkState.AtEndOfTrackEvent)
             throw new InvalidOperationException();
-        state = SmfSinkState.BetweenTracks;
+        state = FileSinkState.BetweenTracks;
     }
 
     public void End()
     {
-        if (state == SmfSinkState.Ended) return;
-        if (state != SmfSinkState.BetweenTracks) EndTrack();
-        state = SmfSinkState.Ended;
+        if (state == FileSinkState.Ended) return;
+        if (state != FileSinkState.BetweenTracks) EndTrack();
+        state = FileSinkState.Ended;
 
         if (flushSink is not null)
             Feed(flushSink);
     }
 
-    public void Feed(ISmfSink sink)
+    public void Feed(IFileSink sink)
     {
-        if (state is not SmfSinkState.BetweenTracks and not SmfSinkState.Ended)
+        if (state is not FileSinkState.BetweenTracks and not FileSinkState.Ended)
             throw new InvalidOperationException();
 
-        sink.Begin(SmfTrackFormat.Single, TimeDivision ?? throw new UnreachableException());
+        sink.Begin(TrackFormat.Single, TimeDivision ?? throw new UnreachableException());
         FeedTrack(sink);
         sink.End();
     }
 
-    public void FeedTrack(ISmfSink sink)
+    public void FeedTrack(IFileSink sink)
     {
-        if (state is not SmfSinkState.BetweenTracks and not SmfSinkState.Ended)
+        if (state is not FileSinkState.BetweenTracks and not FileSinkState.Ended)
             throw new InvalidOperationException();
 
         sink.BeginTrack();
@@ -134,5 +134,5 @@ public sealed class SmfTrackMerger : ISmfSink
         sink.EndTrack();
     }
 
-    void ISmfSink.Begin(SmfTrackFormat trackFormat, TimeDivision timeDivision) => Begin(timeDivision);
+    void IFileSink.Begin(TrackFormat trackFormat, TimeDivision timeDivision) => Begin(timeDivision);
 }

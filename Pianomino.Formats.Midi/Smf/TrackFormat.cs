@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace Pianomino.Formats.Midi.Smf;
 
-public enum SmfTrackFormat : ushort
+public enum TrackFormat : ushort
 {
     Single = 0,
     Simultaneous = 1,

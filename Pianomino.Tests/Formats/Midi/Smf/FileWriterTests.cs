@@ -5,14 +5,14 @@ using Xunit;
 
 namespace Pianomino.Formats.Midi.Smf;
 
-public static class SmfWriterTests
+public static class FileWriterTests
 {
     [Fact]
     public static void TestAutoEndOfTrackEvent()
     {
         var stream = new MemoryStream();
 
-        using (var writer = new SmfWriter(stream, transferOwnership: false, SmfTrackFormat.Simultaneous, TimeDivision.OneTickPerQuarterNote))
+        using (var writer = new FileWriter(stream, transferOwnership: false, TrackFormat.Simultaneous, TimeDivision.OneTickPerQuarterNote))
         {
             writer.BeginTrack();
             writer.EndTrack(); // Should be automatically added
@@ -23,17 +23,17 @@ public static class SmfWriterTests
         }
 
         stream.Position = 0;
-        var reader = new SmfReader(stream, validationErrorHandler: SmfReader.Strict);
+        var reader = new FileReader(stream, validationErrorHandler: FileReader.Strict);
 
         for (int i = 0; i < 2; ++i)
         {
-            Assert.Equal(SmfReaderState.StartOfTrack, reader.Read());
-            Assert.Equal(SmfReaderState.Event, reader.Read());
+            Assert.Equal(FileReaderState.StartOfTrack, reader.Read());
+            Assert.Equal(FileReaderState.Event, reader.Read());
             Assert.Equal(MetaEventTypeByte.EndOfTrack, reader.GetEvent().GetMetaType());
-            Assert.Equal(SmfReaderState.EndOfTrack, reader.Read());
+            Assert.Equal(FileReaderState.EndOfTrack, reader.Read());
         }
 
-        Assert.Equal(SmfReaderState.EndOfFile, reader.Read());
+        Assert.Equal(FileReaderState.EndOfFile, reader.Read());
     }
 
     [Fact]
@@ -41,7 +41,7 @@ public static class SmfWriterTests
     {
         var stream = new MemoryStream();
 
-        using (var writer = new SmfWriter(stream, transferOwnership: false, SmfTrackFormat.Simultaneous, TimeDivision.OneTickPerQuarterNote))
+        using (var writer = new FileWriter(stream, transferOwnership: false, TrackFormat.Simultaneous, TimeDivision.OneTickPerQuarterNote))
         {
             writer.BeginTrack();
             writer.Write(0, new Events.SequenceNumber(1).ToRaw());
@@ -54,6 +54,6 @@ public static class SmfWriterTests
         }
 
         stream.Position = 0;
-        SmfReader.Read(stream, validationErrorHandler: SmfReader.Strict);
+        FileReader.Read(stream, validationErrorHandler: FileReader.Strict);
     }
 }

@@ -3,7 +3,7 @@ using System.Text;
 
 namespace Pianomino.Formats.Midi.Smf.Events;
 
-public sealed class ChannelEvent : SmfEvent
+public sealed class ChannelEvent : Event
 {
     public ChannelMessage Message { get; }
 

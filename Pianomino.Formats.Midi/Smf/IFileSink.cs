@@ -6,9 +6,9 @@ using System.Threading.Tasks;
 
 namespace Pianomino.Formats.Midi.Smf;
 
-public interface ISmfSink
+public interface IFileSink
 {
-    void Begin(SmfTrackFormat format, TimeDivision timeDivision);
+    void Begin(TrackFormat format, TimeDivision timeDivision);
 
     void BeginTrack();
     void AddEvent(uint timeDelta, in RawEvent message);
@@ -20,7 +20,7 @@ public interface ISmfSink
     void End();
 }
 
-public enum SmfSinkState : byte
+public enum FileSinkState : byte
 {
     Initial,
     BetweenTracks,

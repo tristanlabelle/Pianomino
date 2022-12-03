@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace Pianomino.Formats.Midi.Smf;
 
-internal static class SmfFormat
+internal static class FileFormat
 {
     public const uint RmidGroupID = 0x52_49_46_46; // RIFF
     public const uint RmidTypeID = 0x52_4D_49_44; // RMID
@@ -29,7 +29,7 @@ internal static class SmfFormat
     {
         public const int Length = 6;
 
-        public SmfTrackFormat TrackFormat { get; init; }
+        public TrackFormat TrackFormat { get; init; }
         public ushort TrackCount { get; init; }
         public TimeDivision TimeDivision { get; init; }
     }

@@ -5,12 +5,12 @@ using Xunit;
 
 namespace Pianomino.Formats.Midi.Smf;
 
-public static class SmfReaderTests
+public static class FileReaderTests
 {
     [Fact]
     public static void TestReadStandardExampleFileFormat0()
     {
-        var reader = new SmfReader(new MemoryStream(new byte[]
+        var reader = new FileReader(new MemoryStream(new byte[]
         {
             0x4D, 0x54, 0x68, 0x64, // MThd
             0x00, 0x00, 0x00, 0x06, // chunk length
@@ -33,16 +33,16 @@ public static class SmfReaderTests
             0x00, 0x81, 0x43, 0x40,
             0x00, 0x80, 0x4C, 0x40,
             0x00, 0xFF, 0x2F, 0x00 // end of track
-        }), allowRiffHeader: false, SmfReader.Strict);
+        }), allowRiffHeader: false, FileReader.Strict);
 
-        Assert.Equal(SmfReaderState.PostHeader, reader.State);
+        Assert.Equal(FileReaderState.PostHeader, reader.State);
         Assert.False(reader.IsRmidFile);
-        Assert.Equal(SmfTrackFormat.Single, reader.TrackFormat);
+        Assert.Equal(TrackFormat.Single, reader.TrackFormat);
         Assert.Equal(1, reader.TrackCount);
         Assert.Equal(TimeDivisionFormat.TicksPerQuarterNote, reader.TimeDivision.Format);
         Assert.Equal(96, reader.TimeDivision.TicksPerQuarterNote);
 
-        Assert.Equal(SmfReaderState.StartOfTrack, reader.Read());
+        Assert.Equal(FileReaderState.StartOfTrack, reader.Read());
 
         (int DeltaTime, RawEvent Event)[] expectedEvents = new (int DeltaTime, RawEvent Event)[]
         {
@@ -64,15 +64,15 @@ public static class SmfReaderTests
 
         foreach (var expectedEvent in expectedEvents)
         {
-            Assert.Equal(SmfReaderState.Event, reader.Read());
+            Assert.Equal(FileReaderState.Event, reader.Read());
             var actualEvent = reader.GetEvent();
             Assert.Equal(expectedEvent.DeltaTime, reader.GetEventTimeDelta());
             Assert.Equal(expectedEvent.Event.HeaderByte, actualEvent.HeaderByte);
             Assert.Equal(expectedEvent.Event.Payload.Length, actualEvent.Payload.Length);
         }
 
-        Assert.Equal(SmfReaderState.EndOfTrack, reader.Read());
-        Assert.Equal(SmfReaderState.EndOfFile, reader.Read());
+        Assert.Equal(FileReaderState.EndOfTrack, reader.Read());
+        Assert.Equal(FileReaderState.EndOfFile, reader.Read());
     }
 
     [Fact]
@@ -93,9 +93,9 @@ public static class SmfReaderTests
 				0x00, 0xFF, 0x2F, 0x00 // end of track
         };
 
-        var reader = new SmfReader(new MemoryStream(data), allowRiffHeader: true, SmfReader.Strict);
+        var reader = new FileReader(new MemoryStream(data), allowRiffHeader: true, FileReader.Strict);
         Assert.True(reader.IsRmidFile);
-        Assert.Equal(SmfTrackFormat.Single, reader.TrackFormat);
+        Assert.Equal(TrackFormat.Single, reader.TrackFormat);
         Assert.Equal(1, reader.TrackCount);
     }
 }

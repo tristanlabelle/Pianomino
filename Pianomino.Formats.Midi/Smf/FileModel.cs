@@ -1,16 +1,13 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Collections.Immutable;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace Pianomino.Formats.Midi.Smf;
 
 /// <summary>
 /// Represents the contents of a Standard MIDI File.
 /// </summary>
-public sealed partial record SmfData
+public sealed partial record FileModel
 {
     public readonly struct TrackEvent
     {
