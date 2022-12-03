@@ -95,7 +95,7 @@ public sealed class FileWriter : IFileSink, IDisposable
         State = FileSinkState.BetweenTracks;
     }
 
-    public void ResetRunningStatus() => runningStatus.Reset();
+    public void ResetRunningStatus() => runningStatus.Clear();
 
     public void WriteChannel(uint timeDelta, StatusByte status, byte firstDataByte, byte secondDataByte = 0)
     {
@@ -134,7 +134,7 @@ public sealed class FileWriter : IFileSink, IDisposable
         binaryWriter.Write7BitEncodedInt(data.Length);
         binaryWriter.Write(data);
 
-        runningStatus.Reset();
+        runningStatus.Clear();
 
         if (type == MetaEventTypeByte.EndOfTrack)
             State = FileSinkState.AtEndOfTrackEvent;

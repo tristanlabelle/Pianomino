@@ -2,117 +2,125 @@
 using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.Diagnostics;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+using System.Runtime.InteropServices;
 
 namespace Pianomino.Formats.Midi;
 
 public sealed class MessageDecoder
 {
-    public enum Warning
+    public enum Problem
     {
         IncompleteMessage,
-        MissingStatusByte
+        MissingEndOfSysEx,
+        MissingStatusByte,
+        UnknownStatusByte
     }
 
-    private RunningStatus runningStatus;
-    private StatusByte bufferedStatus;
-    private int remainingDataByteCount;
     private readonly List<byte> bufferedData = new();
+    private readonly Queue<RawMessage> messages = new();
+    private RunningStatus runningStatus;
+    private StatusByte currentStatus;
+    private bool ignoreExpectedEndOfSysEx;
 
-    public StatusByte? RunningStatus
+    public MessageDecoder(bool ignoreExpectedEndOfSysEx = true)
     {
-        get => runningStatus.Current;
-        set => runningStatus.Current = value;
+        this.ignoreExpectedEndOfSysEx = ignoreExpectedEndOfSysEx;
     }
 
-    public RawMessage? Feed(byte @byte, out Warning? warning)
-    {
-        warning = default;
+    public event Action<Problem>? ProblemEncountered;
 
+    public StatusByte? RunningStatus => runningStatus.Current;
+    public int DecodedCount => messages.Count;
+    public bool IsPartial => currentStatus != 0;
+
+    public RawMessage Dequeue() => messages.Dequeue();
+
+    public void Feed(byte @byte)
+    {
         var asStatusByte = (StatusByte)@byte;
+
+        // Handle real-time messages
         if (asStatusByte.IsSystemRealTimeMessage())
         {
             // System real-time messages can happen at any time, even within other messages
-            runningStatus.OnNewStatus(asStatusByte);
-            return RawMessage.Create(asStatusByte);
+            // MIDI 1.0 spec, 4.2: "Nothing is done to the buffer during reception of real time messages."
+            if (asStatusByte is StatusByte.UndefinedF9 or StatusByte.UndefinedFD)
+                ProblemEncountered?.Invoke(Problem.UnknownStatusByte);
+
+            messages.Enqueue(RawMessage.Create(asStatusByte));
+            return;
         }
 
-        if (bufferedStatus != 0 && asStatusByte.IsValid()) // Unexpected new message case
+        if (asStatusByte.IsValid())
         {
-            if (bufferedStatus == StatusByte.SystemExclusive)
+            // A new message must be starting
+            // Handle interruption of prior message
+            if (currentStatus == StatusByte.SystemExclusive)
             {
-                // Any new message end a system exclusive message
-                // although normally it should be an end-of-system-exclusive message
+                // MIDI 1.0 spec
+                // "Exclusive messages can contain any number of Data bytes, and can be
+                // terminated either by an End of Exclusive(EOX) or any other Status byte(except
+                // Real Time messages).An EOX should always be sent at the end of a System
+                // Exclusive message."
                 if (asStatusByte != StatusByte.EndOfExclusive)
-                {
-                    // Could produce two messages :/
-                    throw new NotImplementedException();
-                }
+                    ProblemEncountered?.Invoke(Problem.MissingEndOfSysEx);
 
-                var message = RawMessage.CreateSysEx(ImmutableArray.CreateRange(bufferedData));
-                bufferedStatus = 0;
-                remainingDataByteCount = 0;
+                messages.Enqueue(RawMessage.Create(currentStatus, CollectionsMarshal.AsSpan(bufferedData)));
                 bufferedData.Clear();
-                return message;
+                currentStatus = 0;
+
+                if (asStatusByte == StatusByte.EndOfExclusive && ignoreExpectedEndOfSysEx) return;
+            }
+            else if (currentStatus != 0)
+            {
+                ProblemEncountered?.Invoke(Problem.IncompleteMessage);
+                bufferedData.Clear();
+                currentStatus = 0;
             }
 
-            bufferedStatus = 0;
-            remainingDataByteCount = 0;
-            bufferedData.Clear();
-            warning = Warning.IncompleteMessage; // Could produce two errors :/
+            // Handle new message
+            runningStatus.OnNewStatus(asStatusByte);
+            if (asStatusByte.GetPayloadLength() == 0)
+                messages.Enqueue(RawMessage.Create(asStatusByte));
+            else
+            {
+                if (asStatusByte is StatusByte.UndefinedF4 or StatusByte.UndefinedF5)
+                    ProblemEncountered?.Invoke(Problem.UnknownStatusByte);
+                currentStatus = asStatusByte;
+            }
         }
-
-        if (bufferedStatus == 0) // New message case
+        else
         {
-            if (asStatusByte.IsValid()) // New status case
+            // Handle non-status byte
+            if (currentStatus == 0)
             {
-                runningStatus.OnNewStatus(asStatusByte);
-
-                remainingDataByteCount = asStatusByte.GetPayloadLength() ?? int.MaxValue;
-                if (remainingDataByteCount == 0) return RawMessage.Create(asStatusByte);
-
-                bufferedStatus = asStatusByte;
-                return null;
-            }
-            else // Running status case
-            {
+                // Handle running status
                 if (!runningStatus.IsValid)
                 {
-                    warning = Warning.MissingStatusByte;
-                    return null;
+                    ProblemEncountered?.Invoke(Problem.MissingStatusByte);
+                    return;
                 }
 
-                var status = runningStatus.Current!.Value; // Not null by test above
-                if (status.GetPayloadLengthType() == ShortPayloadLengthType.OneByte)
-                    return RawMessage.Create(status, @byte);
-
-                // Two-byte channel message
-                bufferedStatus = status;
-                bufferedData.Add(@byte);
-                remainingDataByteCount = 1;
-                return null;
+                currentStatus = runningStatus.Current!.Value;
             }
-        }
-        else // Message continuation case
-        {
-            Debug.Assert(!asStatusByte.IsValid()); // Case already handled
 
+            // Handle message continuation
             bufferedData.Add(@byte);
-            remainingDataByteCount--;
-            if (remainingDataByteCount > 0) return null;
+            if (bufferedData.Count != currentStatus.GetPayloadLength()) return;
 
-            var message = bufferedData.Count switch
-            {
-                1 => RawMessage.Create(bufferedStatus, bufferedData[0]),
-                2 => RawMessage.Create(bufferedStatus, bufferedData[0], bufferedData[1]),
-                _ => RawMessage.Create(bufferedStatus, ImmutableArray.CreateRange(bufferedData)),
-            };
-
-            bufferedStatus = 0;
+            messages.Enqueue(RawMessage.Create(currentStatus, CollectionsMarshal.AsSpan(bufferedData)));
             bufferedData.Clear();
-            return message;
+            currentStatus = 0;
         }
+    }
+
+    public void Feed(StatusByte @byte) => Feed((byte)@byte);
+
+    public void Reset()
+    {
+        bufferedData.Clear();
+        messages.Clear();
+        runningStatus.Clear();
+        currentStatus = 0;
     }
 }

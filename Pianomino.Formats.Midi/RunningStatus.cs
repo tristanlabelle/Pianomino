@@ -25,7 +25,7 @@ public struct RunningStatus
         }
     }
 
-    public void Reset() => current = 0;
+    public void Clear() => current = 0;
 
     public void OnNewStatus(StatusByte value)
     {

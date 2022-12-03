@@ -11,17 +11,32 @@ namespace Pianomino.Formats.Midi;
 public static class MessageDecoderTests
 {
     [Fact]
+    public static void TestInitialState()
+    {
+        var decoder = new MessageDecoder();
+        Assert.False(decoder.IsPartial);
+        Assert.Equal(0, decoder.DecodedCount);
+        Assert.Null(decoder.RunningStatus);
+    }
+
+    [Fact]
     public static void TestSingleNoteOn()
     {
         const StatusByte status = StatusByte.NoteOn_Channel1;
         const byte note = 60; // Middle C
         const byte velocity = 0x7F; // Maximum
 
-        var decoder = new MessageDecoder();
+        var decoder = CreateStrictDecoder();
 
-        FeedNoOutput(decoder, (byte)status);
-        FeedNoOutput(decoder, note);
-        var message = FeedNoWarning(decoder, velocity)!.Value;
+        decoder.Feed((byte)status);
+        Assert.Equal(decoder.RunningStatus, status);
+        decoder.Feed(note);
+        Assert.Equal(0, decoder.DecodedCount);
+        decoder.Feed(velocity);
+        Assert.Equal(1, decoder.DecodedCount);
+        var message = decoder.Dequeue();
+        Assert.Equal(0, decoder.DecodedCount);
+        Assert.Equal(decoder.RunningStatus, status);
 
         Assert.Equal(status, message.Status);
         Assert.Equal(2, message.Payload.Length);
@@ -30,15 +45,16 @@ public static class MessageDecoderTests
     }
 
     [Fact]
-    public static void TestSystemExclusiveMessage()
+    public static void TestSimpleSystemExclusiveMessage()
     {
-        var decoder = new MessageDecoder();
-        FeedNoOutput(decoder, (byte)StatusByte.SystemExclusive);
-        FeedNoOutput(decoder, (byte)0);
-        FeedNoOutput(decoder, (byte)1);
-        FeedNoOutput(decoder, (byte)2);
-        FeedNoOutput(decoder, (byte)3);
-        var message = FeedNoWarning(decoder, (byte)StatusByte.EndOfExclusive)!.Value;
+        var decoder = CreateStrictDecoder();
+        decoder.Feed((byte)StatusByte.SystemExclusive);
+        decoder.Feed((byte)0);
+        decoder.Feed(1);
+        decoder.Feed(2);
+        decoder.Feed(3);
+        decoder.Feed((byte)StatusByte.EndOfExclusive);
+        var message = decoder.Dequeue();
 
         Assert.Equal(StatusByte.SystemExclusive, message.Status);
         Assert.Equal(4, message.Payload.Length);
@@ -51,59 +67,58 @@ public static class MessageDecoderTests
     [Fact]
     public static void TestRunningStatus()
     {
-        const StatusByte status = StatusByte.NoteOn_Channel1;
-        const byte note = 60; // Middle C
-        const byte velocity = 0x7F; // Maximum
-
         var decoder = new MessageDecoder();
         Assert.Null(decoder.RunningStatus);
+        decoder.Feed(StatusByte.NoteOn_Channel1);
+        Assert.Equal(StatusByte.NoteOn_Channel1, decoder.RunningStatus);
+        decoder.Feed(NoteKey.C4.Number);
+        decoder.Feed((byte)Velocity.MaxValue);
 
-        FeedNoOutput(decoder, (byte)status);
-        Assert.Equal(status, decoder.RunningStatus);
-        FeedNoOutput(decoder, note);
-        Assert.Equal(status, FeedNoWarning(decoder, velocity)!.Value.Status);
+        var fullMessage = decoder.Dequeue();
+        Assert.Equal(StatusByte.NoteOn_Channel1, fullMessage.Status);
 
-        FeedNoOutput(decoder, note);
-        var message = FeedNoWarning(decoder, 0)!.Value;
-        Assert.Equal(status, message.Status);
-        Assert.Equal(note, message.Payload[0]);
-        Assert.Equal(0, message.Payload[1]);
+        decoder.Feed(NoteKey.C4.Number);
+        decoder.Feed((byte)Velocity.Off);
+        var runningStatusMessage = decoder.Dequeue();
+        Assert.Equal(StatusByte.NoteOn_Channel1, runningStatusMessage.Status);
+        Assert.Equal(NoteKey.C4.Number, runningStatusMessage.Payload[0]);
+        Assert.Equal((byte)Velocity.Off, runningStatusMessage.Payload[1]);
+        Assert.Equal(StatusByte.NoteOn_Channel1, decoder.RunningStatus);
     }
 
     [Fact]
     public static void TestRunningStatusReset()
     {
-        var decoder = new MessageDecoder();
+        var decoder = CreateStrictDecoder();
         Assert.Null(decoder.RunningStatus);
-        FeedNoOutput(decoder, (byte)StatusByte.ProgramChange_Channel1);
+        decoder.Feed(StatusByte.ProgramChange_Channel1);
         Assert.Equal(StatusByte.ProgramChange_Channel1, decoder.RunningStatus);
-        Assert.NotNull(FeedNoWarning(decoder, 0));
+        decoder.Feed((byte)GeneralMidiProgram.AcousticGrandPiano);
         Assert.Equal(StatusByte.ProgramChange_Channel1, decoder.RunningStatus);
+        var programChangeMessage = decoder.Dequeue();
 
-        Assert.NotNull(FeedNoWarning(decoder, (byte)StatusByte.TuneRequest));
+        Assert.Equal(StatusByte.ProgramChange_Channel1, decoder.RunningStatus);
+        decoder.Feed(StatusByte.TuneRequest);
         Assert.Null(decoder.RunningStatus);
     }
 
     [Fact]
     public static void TestInterleavedSystemRealTimeMessage()
     {
+        var decoder = CreateStrictDecoder();
+        decoder.Feed(StatusByte.ProgramChange_Channel1);
+        decoder.Feed(StatusByte.Clock);
+        var clockMessage = decoder.Dequeue();
+        Assert.Equal(StatusByte.Clock, clockMessage.Status);
+        decoder.Feed((byte)GeneralMidiProgram.AcousticGrandPiano);
+        var programChangeMessage = decoder.Dequeue();
+        Assert.Equal(StatusByte.ProgramChange_Channel1, programChangeMessage.Status);
+    }
+
+    private static MessageDecoder CreateStrictDecoder()
+    {
         var decoder = new MessageDecoder();
-        FeedNoOutput(decoder, (byte)StatusByte.ProgramChange_Channel1);
-        Assert.Equal(StatusByte.Clock, FeedNoWarning(decoder, (byte)StatusByte.Clock)!.Value.Status);
-        Assert.Equal(StatusByte.ProgramChange_Channel1, FeedNoWarning(decoder, 0)!.Value.Status);
-    }
-
-    private static void FeedNoOutput(MessageDecoder decoder, byte @byte)
-    {
-        var message = decoder.Feed(@byte, out var warning);
-        Assert.Null(message);
-        Assert.Null(warning);
-    }
-
-    private static RawMessage? FeedNoWarning(MessageDecoder decoder, byte @byte)
-    {
-        var message = decoder.Feed(@byte, out var warning);
-        Assert.Null(warning);
-        return message;
+        decoder.ProblemEncountered += problem => throw new UnreachableException();
+        return decoder;
     }
 }
